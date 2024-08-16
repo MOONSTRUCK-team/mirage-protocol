@@ -1,0 +1,12 @@
+{
+  "type": "module",
+  "scripts": {
+    "test": "cd ../icp/example && dfx stop && dfx start --background --clean && dfx generate && dfx deploy && cd ../../bridge && node main.js"
+  },
+  "dependencies": {
+    "@dfinity/agent": "^2.0.0"
+  },
+  "devDependencies": {
+    "@dfinity/identity-secp256k1": "^2.0.0"
+  }
+}
