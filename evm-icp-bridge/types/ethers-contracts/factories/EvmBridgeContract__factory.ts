@@ -13,19 +13,42 @@ const _abi = [
     anonymous: false,
     inputs: [
       {
+        internalType: "uint256",
+        name: "id",
+        type: "uint256",
         indexed: true,
-        name: "from",
-        type: "address",
       },
       {
-        indexed: true,
-        name: "to",
-        type: "address",
-      },
-      {
-        indexed: false,
-        name: "message",
-        type: "string",
+        components: [
+          {
+            internalType: "uint256",
+            name: "nonce",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "srcChainId",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "destChainId",
+            type: "uint256",
+          },
+          {
+            internalType: "address",
+            name: "contract",
+            type: "address",
+          },
+          {
+            internalType: "uint256",
+            name: "tokenId",
+            type: "uint256",
+          },
+        ],
+        internalType: "struct Bridge.Message",
+        name: "messageData",
+        type: "tuple",
       },
     ],
     name: "messageSend",

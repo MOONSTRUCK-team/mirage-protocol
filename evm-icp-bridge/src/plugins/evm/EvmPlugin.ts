@@ -1,8 +1,8 @@
 import type { Plugin, EvmListener, Executor, Router, Message } from '../../core/Types';
-import { ChainIdentifier } from '../../core/Types';
+import { ChainId } from '../../core/Types';
 
 export class EvmPlugin implements Plugin { 
-    identifier: ChainIdentifier;
+    identifier: ChainId;
     listener: EvmListener;
     executor: Executor;
     router: Router;
@@ -11,7 +11,7 @@ export class EvmPlugin implements Plugin {
         this.listener = listener;
         this.executor = executor;
         this.router = router;
-        this.identifier = ChainIdentifier.EVM;
+        this.identifier = ChainId.Mainnet;
         this.listener.setup(this.onMessageReceived);
     }
 

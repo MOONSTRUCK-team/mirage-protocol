@@ -3,6 +3,7 @@
 /* eslint-disable */
 import type {
   BaseContract,
+  BigNumberish,
   FunctionFragment,
   Interface,
   EventFragment,
@@ -19,21 +20,46 @@ import type {
   TypedListener,
 } from "./common";
 
+export declare namespace Bridge {
+  export type MessageStruct = {
+    nonce: BigNumberish;
+    srcChainId: BigNumberish;
+    destChainId: BigNumberish;
+    contract: AddressLike;
+    tokenId: BigNumberish;
+  };
+
+  export type MessageStructOutput = [
+    nonce: bigint,
+    srcChainId: bigint,
+    destChainId: bigint,
+    contract: string,
+    tokenId: bigint
+  ] & {
+    nonce: bigint;
+    srcChainId: bigint;
+    destChainId: bigint;
+    contract: string;
+    tokenId: bigint;
+  };
+}
+
 export interface EvmBridgeContractInterface extends Interface {
   getEvent(nameOrSignatureOrTopic: "messageSend"): EventFragment;
 }
 
 export namespace messageSendEvent {
   export type InputTuple = [
-    from: AddressLike,
-    to: AddressLike,
-    message: string
+    id: BigNumberish,
+    messageData: Bridge.MessageStruct
   ];
-  export type OutputTuple = [from: string, to: string, message: string];
+  export type OutputTuple = [
+    id: bigint,
+    messageData: Bridge.MessageStructOutput
+  ];
   export interface OutputObject {
-    from: string;
-    to: string;
-    message: string;
+    id: bigint;
+    messageData: Bridge.MessageStructOutput;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -97,7 +123,7 @@ export interface EvmBridgeContract extends BaseContract {
   >;
 
   filters: {
-    "messageSend(address,address,string)": TypedContractEvent<
+    "messageSend(uint256,tuple)": TypedContractEvent<
       messageSendEvent.InputTuple,
       messageSendEvent.OutputTuple,
       messageSendEvent.OutputObject

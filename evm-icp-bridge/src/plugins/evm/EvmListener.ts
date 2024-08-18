@@ -1,6 +1,9 @@
 import { ethers, type AddressLike } from 'ethers';
-import { type Message, type EvmListener , ChainIdentifier} from '../../core/Types';
-import { EvmBridgeContract__factory } from '../../../types/ethers-contracts';
+import { type Message, type EvmListener , ChainId} from '../../core/Types';
+import { EvmBridgeContract__factory } from '../../../types/ethers-contracts/factories/EvmBridgeContract__factory';
+import type { Bridge } from '../../../types/ethers-contracts/EvmBridgeContract';
+import type { BytesLike } from 'ethers';
+import type { BigNumberish } from 'ethers';
 
 export class EvmListenerImpl implements EvmListener {
     rpcUrl: string;
@@ -17,24 +20,31 @@ export class EvmListenerImpl implements EvmListener {
         const contractInstance = EvmBridgeContract__factory.connect(this.contract.toString(), provider);
 
         // Set up event listeners or other initialization logic
-        contractInstance.on(contractInstance.filters.messageSend, (from, to, message) => {
-            const msg = this.parseMessage(message);
-            // 1. Create an message object. Can eventData be type checked?
-            // 2. Decode the data in order to read the destination chain
-            // 3. Define the data format (interface) with message sender
+        contractInstance.on(contractInstance.filters.messageSend, (id: BigNumberish, messageData: Bridge.MessageStruct) => {
+            const msg = this.parseMessage(id, messageData);
             onMessageReceivedCb(msg);
         });
 
         console.log('EVM Listener is set up');
     }
 
-    parseMessage(message: string): Message {
-        // Decode the message
-        // Return a Message object
+    parseMessage(messageId: BigNumberish, message: Bridge.MessageStruct): Message {
         return {
-            data: message,
-            sender: '0x123',
-            destinationChain: ChainIdentifier.ICP
+            // TODO Check if this will properly parse the BigInt values
+            id: BigInt(messageId),
+            nonce: BigInt(message.nonce),
+            srcChainId: this.getChainId(BigInt(message.srcChainId)),
+            destChainId: ChainId.ICP,
+            contract: message.contract,
+            tokenId: BigInt(message.tokenId)
         };
+    }
+
+    getChainId(chainId: bigint): ChainId {
+        if (chainId === BigInt(1)) {
+            return ChainId.Mainnet;
+        } else {
+            return ChainId.ICP;
+        }
     }
 }
