@@ -1,23 +1,21 @@
-/// Description: Multi-Chain NFT Bridge Standard for ICP
 use candid::{CandidType, Nat, Principal};
+use ic_cdk_macros::{query, update};
 use serde::{Deserialize, Serialize};
+use std::cell::RefCell;
+use std::collections::HashMap;
 
 // ========== Type Definitions ==========
 
-/// A subaccount type, represented as a 32-byte blob.
 pub type Subaccount = [u8; 32];
 
-/// Account representation: an owner (principal) and an optional subaccount.
 #[derive(Clone, Debug, Serialize, Deserialize, CandidType, PartialEq, Eq, Hash)]
 pub struct Account {
     pub owner: Principal,
     pub subaccount: Option<Subaccount>,
 }
 
-/// Token ID is a natural number.
 pub type TokenId = Nat;
 
-/// Represents a flexible value for metadata purposes.
 #[derive(Clone, Debug, Serialize, Deserialize, CandidType)]
 pub enum Value {
     Blob(Vec<u8>),
@@ -28,14 +26,12 @@ pub enum Value {
     Map(Vec<(String, Value)>),
 }
 
-/// Metadata for tokens and collections.
 #[derive(Clone, Debug, Serialize, Deserialize, CandidType)]
 pub struct MetadataEntry {
     pub key: String,
     pub value: Value,
 }
 
-/// Mint arguments for creating a new token.
 #[derive(Clone, Debug, Serialize, Deserialize, CandidType)]
 pub struct MintArgs {
     pub to: Account,
@@ -43,7 +39,6 @@ pub struct MintArgs {
     pub metadata: Vec<MetadataEntry>,
 }
 
-/// Transfer arguments for performing a token transfer.
 #[derive(Clone, Debug, Serialize, Deserialize, CandidType)]
 pub struct TransferArgs {
     pub spender_subaccount: Option<Subaccount>,
@@ -51,19 +46,17 @@ pub struct TransferArgs {
     pub to: Account,
     pub token_ids: Vec<TokenId>,
     pub memo: Option<Vec<u8>>,
-    pub created_at_time: Option<u64>, // Time as nanoseconds since UNIX epoch
-    pub is_atomic: Option<bool>,      // Defaults to true
+    pub created_at_time: Option<u64>,
+    pub is_atomic: Option<bool>,
 }
 
-/// Transfer result indicating success or failure of a transfer.
-#[derive(Clone, Debug, Serialize, Deserialize, CandidType)]
+#[derive(Debug, Clone, CandidType, Serialize, Deserialize, PartialEq)]
 pub enum TransferResult {
-    Ok(Nat), // Transaction index in the ledger
+    Ok(Nat),
     Err(TransferError),
 }
 
-/// Errors that can occur during a transfer operation.
-#[derive(Clone, Debug, Serialize, Deserialize, CandidType)]
+#[derive(Clone, Debug, Serialize, Deserialize, CandidType, PartialEq)]
 pub enum TransferError {
     Unauthorized { token_ids: Vec<TokenId> },
     TooOld,
@@ -73,81 +66,331 @@ pub enum TransferError {
     GenericError { error_code: Nat, message: String },
 }
 
-// ========== Metadata Variant Definition ==========
+// ========== Global State ==========
 
-/// Defines the metadata that can be attached to NFTs and collections.
-#[derive(Clone, Debug, Serialize, Deserialize, CandidType)]
-pub enum Metadata {
-    Nat(Nat),
-    Int(i128),
-    Text(String),
-    Blob(Vec<u8>),
+thread_local! {
+    static CONTRACT: RefCell<Option<NFTContract>> = RefCell::new(None);
 }
 
-// ========== ICRC-7 Trait Definition ==========
+// ========== NFT Contract ==========
 
-/// The ICRC-7 trait defines the required methods for compliant NFTs on the Internet Computer.
-pub trait ICRC7 {
-    // ===== Collection-Level Methods =====
+pub struct NFTContract {
+    pub name: String,
+    pub symbol: String,
+    pub description: Option<String>,
+    pub image: Option<String>,
+    pub total_supply: Nat,
+    pub max_supply: Option<Nat>,
+    pub royalties: Option<u16>,
+    pub royalty_recipient: Option<Account>,
+    pub collection_metadata: Vec<MetadataEntry>,
+    pub balances: HashMap<Account, Vec<TokenId>>,
+    pub metadata: HashMap<TokenId, Vec<MetadataEntry>>,
+}
 
-    /// Retrieves the name of the NFT collection (e.g., "My NFT Collection").
-    fn icrc7_name(&self) -> String;
+impl NFTContract {
+    // Dynamic constructor with user-supplied values
+    pub fn new(
+        name: String,
+        symbol: String,
+        description: Option<String>,
+        image: Option<String>,
+        max_supply: Option<Nat>,
+        royalties: Option<u16>,
+        royalty_recipient: Option<Account>,
+        collection_metadata: Vec<MetadataEntry>,
+    ) -> Self {
+        Self {
+            name,
+            symbol,
+            description,
+            image,
+            total_supply: Nat::from(0u64),
+            max_supply,
+            royalties,
+            royalty_recipient,
+            collection_metadata,
+            balances: HashMap::new(),
+            metadata: HashMap::new(),
+        }
+    }
 
-    /// Retrieves the symbol of the NFT collection (e.g., "MNC").
-    fn icrc7_symbol(&self) -> String;
+    // Mint function
+    pub fn mint(&mut self, mint_args: MintArgs) -> Result<Nat, TransferError> {
+        if self.metadata.contains_key(&mint_args.token_id) {
+            return Err(TransferError::GenericError {
+                error_code: Nat::from(2u64),
+                message: "Token ID already exists".to_string(),
+            });
+        }
 
-    /// Retrieves the description of the NFT collection.
-    fn icrc7_description(&self) -> Option<String>;
+        if let Some(supply_cap) = &self.max_supply {
+            if self.total_supply >= *supply_cap {
+                return Err(TransferError::GenericError {
+                    error_code: Nat::from(1u64),
+                    message: "Max supply reached".to_string(),
+                });
+            }
+        }
 
-    /// Retrieves the image URL of the NFT collection.
-    fn icrc7_image(&self) -> Option<String>;
+        let tokens = self
+            .balances
+            .entry(mint_args.to.clone())
+            .or_insert_with(Vec::new);
+        tokens.push(mint_args.token_id.clone());
 
-    /// Retrieves the total supply of NFTs in the collection.
-    fn icrc7_total_supply(&self) -> Nat;
+        self.metadata
+            .insert(mint_args.token_id.clone(), mint_args.metadata.clone());
 
-    /// Retrieves the maximum supply of NFTs allowed in the collection.
-    fn icrc7_supply_cap(&self) -> Option<Nat>;
+        self.total_supply += Nat::from(1u64);
 
-    /// Retrieves all collection-level metadata in one query.
-    fn icrc7_collection_metadata(&self) -> Vec<MetadataEntry>;
+        Ok(mint_args.token_id)
+    }
 
-    // ===== Royalty-Related Methods =====
+    // Transfer function
+    pub fn transfer(&mut self, transfers: Vec<TransferArgs>) -> Vec<Option<TransferResult>> {
+        let mut results = Vec::new();
 
-    /// Retrieves the default royalty percentage in basis points.
-    fn icrc7_royalties(&self) -> Option<u16>; // In basis points (e.g., 150 = 1.5%)
+        for transfer in transfers.into_iter() {
+            for token_id in &transfer.token_ids {
+                if let Some(sender_tokens) = self.balances.get_mut(&transfer.from) {
+                    if sender_tokens.contains(token_id) {
+                        sender_tokens.retain(|id| id != token_id);
 
-    /// Retrieves the default royalty recipient.
-    fn icrc7_royalty_recipient(&self) -> Option<Account>;
+                        let recipient_tokens = self
+                            .balances
+                            .entry(transfer.to.clone())
+                            .or_insert_with(Vec::new);
+                        recipient_tokens.push(token_id.clone());
 
-    // ===== Token-Level Methods =====
+                        results.push(Some(TransferResult::Ok(Nat::from(1u64))));
+                    } else {
+                        results.push(Some(TransferResult::Err(TransferError::Unauthorized {
+                            token_ids: vec![token_id.clone()],
+                        })));
+                    }
+                } else {
+                    results.push(Some(TransferResult::Err(TransferError::Unauthorized {
+                        token_ids: vec![token_id.clone()],
+                    })));
+                }
+            }
 
-    /// Retrieves the metadata of a specific token by its ID.
-    fn icrc7_metadata(&self, token_id: TokenId) -> Vec<MetadataEntry>;
+            if transfer.is_atomic.unwrap_or(true)
+                && results
+                    .iter()
+                    .any(|res| matches!(res, Some(TransferResult::Err(_))))
+            {
+                for token_id in &transfer.token_ids {
+                    if let Some(recipient_tokens) = self.balances.get_mut(&transfer.to) {
+                        recipient_tokens.retain(|id| id != token_id);
+                    }
+                }
 
-    /// Retrieves the owner of a specific token by its ID.
-    fn icrc7_owner_of(&self, token_id: TokenId) -> Account;
+                return vec![Some(TransferResult::Err(TransferError::GenericError {
+                    error_code: Nat::from(1u64),
+                    message: "Atomic transfer failed".to_string(),
+                }))];
+            }
+        }
 
-    /// Retrieves the balance of NFTs owned by the specified account.
-    fn icrc7_balance_of(&self, account: Account) -> Nat;
+        results
+    }
 
-    /// Retrieves the list of token IDs owned by the specified account.
-    fn icrc7_tokens_of(&self, account: Account) -> Vec<TokenId>;
+    // Burn function
+    pub fn burn(&mut self, token_id: TokenId) -> Result<Nat, TransferError> {
+        if let Some(account) = self.balances.iter_mut().find_map(|(account, tokens)| {
+            if tokens.contains(&token_id) {
+                Some(account.clone())
+            } else {
+                None
+            }
+        }) {
+            self.balances
+                .get_mut(&account)
+                .unwrap()
+                .retain(|id| id != &token_id);
 
-    /// Performs a batch of token transfers.
-    fn icrc7_transfer(&mut self, transfers: Vec<TransferArgs>) -> Vec<Option<TransferResult>>;
+            self.metadata.remove(&token_id);
 
-    // ===== Standard Support Methods =====
+            self.total_supply -= Nat::from(1u64);
 
-    /// Retrieves the list of standards implemented by this contract.
-    fn icrc7_supported_standards(&self) -> Vec<(String, String)>;
+            Ok(token_id)
+        } else {
+            Err(TransferError::Unauthorized {
+                token_ids: vec![token_id],
+            })
+        }
+    }
+}
 
-    // ===== Minting Method =====
+// ========== Query and Update Functions ==========
 
-    /// Mints a new NFT with a specified token ID and metadata, and assigns it to an account.
-    fn icrc7_mint(&mut self, mint_args: MintArgs) -> Result<Nat, TransferError>;
+// Initialize contract with dynamic values
+#[update]
+fn init_contract(
+    name: String,
+    symbol: String,
+    description: Option<String>,
+    image: Option<String>,
+    max_supply: Option<Nat>,
+    royalties: Option<u16>,
+    royalty_recipient: Option<Account>,
+    collection_metadata: Vec<MetadataEntry>,
+) {
+    CONTRACT.with(|contract| {
+        *contract.borrow_mut() = Some(NFTContract::new(
+            name,
+            symbol,
+            description,
+            image,
+            max_supply,
+            royalties,
+            royalty_recipient,
+            collection_metadata,
+        ));
+    });
+}
 
-    // ===== Burning Functionality =====
+// Collection-Level Methods (Queries)
 
-    /// Burns a specific token by its ID, permanently removing it from the collection.
-    fn icrc7_burn(&mut self, token_id: TokenId) -> Result<Nat, TransferError>;
+#[query]
+fn get_name() -> String {
+    CONTRACT.with(|contract| contract.borrow().as_ref().unwrap().name.clone())
+}
+
+#[query]
+fn get_symbol() -> String {
+    CONTRACT.with(|contract| contract.borrow().as_ref().unwrap().symbol.clone())
+}
+
+#[query]
+fn get_description() -> Option<String> {
+    CONTRACT.with(|contract| contract.borrow().as_ref().unwrap().description.clone())
+}
+
+#[query]
+fn get_image() -> Option<String> {
+    CONTRACT.with(|contract| contract.borrow().as_ref().unwrap().image.clone())
+}
+
+#[query]
+fn get_total_supply() -> Nat {
+    CONTRACT.with(|contract| contract.borrow().as_ref().unwrap().total_supply.clone())
+}
+
+#[query]
+fn get_supply_cap() -> Option<Nat> {
+    CONTRACT.with(|contract| contract.borrow().as_ref().unwrap().max_supply.clone())
+}
+
+#[query]
+fn get_collection_metadata() -> Vec<MetadataEntry> {
+    CONTRACT.with(|contract| {
+        contract
+            .borrow()
+            .as_ref()
+            .unwrap()
+            .collection_metadata
+            .clone()
+    })
+}
+
+#[query]
+fn get_royalties() -> Option<u16> {
+    CONTRACT.with(|contract| contract.borrow().as_ref().unwrap().royalties)
+}
+
+#[query]
+fn get_royalty_recipient() -> Option<Account> {
+    CONTRACT.with(|contract| {
+        contract
+            .borrow()
+            .as_ref()
+            .unwrap()
+            .royalty_recipient
+            .clone()
+    })
+}
+
+// Token-Level Methods (Queries)
+
+#[query]
+fn get_metadata(token_id: TokenId) -> Vec<MetadataEntry> {
+    CONTRACT.with(|contract| {
+        contract
+            .borrow()
+            .as_ref()
+            .unwrap()
+            .metadata
+            .get(&token_id)
+            .cloned()
+            .unwrap_or_default()
+    })
+}
+
+#[query]
+fn get_owner_of(token_id: TokenId) -> Account {
+    CONTRACT.with(|contract| {
+        contract
+            .borrow()
+            .as_ref()
+            .unwrap()
+            .balances
+            .iter()
+            .find(|(_, tokens)| tokens.contains(&token_id))
+            .map(|(account, _)| account.clone())
+            .expect("Token not found")
+    })
+}
+
+#[query]
+fn get_balance_of(account: Account) -> Nat {
+    CONTRACT.with(|contract| {
+        Nat::from(
+            contract
+                .borrow()
+                .as_ref()
+                .unwrap()
+                .balances
+                .get(&account)
+                .map_or(0, |tokens| tokens.len()),
+        )
+    })
+}
+
+#[query]
+fn get_tokens_of(account: Account) -> Vec<TokenId> {
+    CONTRACT.with(|contract| {
+        contract
+            .borrow()
+            .as_ref()
+            .unwrap()
+            .balances
+            .get(&account)
+            .cloned()
+            .unwrap_or_default()
+    })
+}
+
+#[query]
+fn get_supported_standards() -> Vec<(String, String)> {
+    vec![("ICRC7".to_string(), "1.0.0".to_string())]
+}
+
+// State-Modifying Methods (Updates)
+
+#[update]
+fn mint(mint_args: MintArgs) -> Result<Nat, TransferError> {
+    CONTRACT.with(|contract| contract.borrow_mut().as_mut().unwrap().mint(mint_args))
+}
+
+#[update]
+fn transfer(transfers: Vec<TransferArgs>) -> Vec<Option<TransferResult>> {
+    CONTRACT.with(|contract| contract.borrow_mut().as_mut().unwrap().transfer(transfers))
+}
+
+#[update]
+fn burn(token_id: TokenId) -> Result<Nat, TransferError> {
+    CONTRACT.with(|contract| contract.borrow_mut().as_mut().unwrap().burn(token_id))
 }

@@ -1,9 +1,11 @@
 {
   "canisters": {
     "icrc-7": {
-      "candid": "backend/icrc-7/icrc-7.did",
+      "type": "rust",
       "package": "icrc-7",
-      "type": "rust"
+      "build": "cargo build --target wasm32-unknown-unknown --release",
+      "wasm": "target/wasm32-unknown-unknown/release/icrc-7.wasm",
+      "candid": "backend/icrc-7/icrc-7.did"
     }
   },
   "defaults": {

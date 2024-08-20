@@ -1,3 +1,82 @@
+type Subaccount = vec nat8;
+
+type Account = record {
+    owner: principal;
+    subaccount: opt Subaccount;
+};
+
+type TokenId = nat;
+
+type Value = variant {
+    Blob: vec nat8;
+    Text: text;
+    Nat: nat;
+    Int: int;
+    Array: vec Value;
+    Map: vec record { key: text; value: Value };
+};
+
+type MetadataEntry = record {
+    key: text;
+    value: Value;
+};
+
+type MintArgs = record {
+    to: Account;
+    token_id: TokenId;
+    metadata: vec MetadataEntry;
+};
+
+type TransferArgs = record {
+    spender_subaccount: opt Subaccount;
+    from: Account;
+    to: Account;
+    token_ids: vec TokenId;
+    memo: opt vec nat8;
+    created_at_time: opt nat64;
+    is_atomic: opt bool;
+};
+
+type TransferResult = variant {
+    Ok: nat;
+    Err: TransferError;
+};
+
+type TransferError = variant {
+    Unauthorized: record { token_ids: vec TokenId };
+    TooOld: null;
+    CreatedInFuture: record { ledger_time: nat64 };
+    Duplicate: record { duplicate_of: nat };
+    TemporarilyUnavailable: null;
+    GenericError: record { error_code: nat; message: text };
+};
+
+type Result = variant {
+    Ok: nat;
+    Err: TransferError;
+};
+
 service : {
-    "greet": (text) -> (text) query;
+    get_name: () -> (text) query;
+    get_symbol: () -> (text) query;
+    get_description: () -> (opt text) query;
+    get_image: () -> (opt text) query;
+    get_total_supply: () -> (nat) query;
+    get_supply_cap: () -> (opt nat) query;
+    get_collection_metadata: () -> (vec MetadataEntry) query;
+    get_royalties: () -> (opt nat16) query;
+    get_royalty_recipient: () -> (opt Account) query;
+    init_contract: (
+        text,      // name
+        text,      // symbol
+        opt text,  // description
+        opt text,  // image
+        opt nat,   // max_supply
+        opt nat16, // royalties
+        opt Account, // royalty_recipient
+        vec MetadataEntry // collection_metadata
+    ) -> ();
+    mint: (MintArgs) -> (Result);
+    transfer: (vec TransferArgs) -> (vec opt TransferResult);
+    burn: (nat) -> (Result);
 }
