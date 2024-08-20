@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "src/send_http_post_rust_backend"
+]
+resolver = "2"
