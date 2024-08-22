@@ -1,8 +1,8 @@
 import type { Executor } from '../../core/Types';
 import { Actor, HttpAgent } from "@dfinity/agent";
 import { Secp256k1KeyIdentity } from "@dfinity/identity-secp256k1";
-import { idlFactory} from '../../artifacts/IcpBridgeCanister'
-
+import { idlFactory } from '../../artifacts/IcpBridgeCanister'
+import { fromHexString as hexStingToArrayBuffer } from '@dfinity/candid';
 
 // TODO Write a proper bridge interface and generate the proper output for the factory
 export class IcpExecutorImpl implements Executor {
@@ -10,13 +10,12 @@ export class IcpExecutorImpl implements Executor {
     actor: Actor | undefined;
     inited: boolean = false;
 
-    constructor(host: string, canisterId: string, identityKey: string) {
-        this.setup(host, canisterId, identityKey);
+    constructor(host: string, canisterId: string, secretKey: string) {
+        this.setup(host, canisterId, secretKey);
     }
 
-    async setup(host: string, canisterId: string, identityKey: string): Promise<void> {
-        // TODO - Use the identityKey to generate the identity
-        const identity = Secp256k1KeyIdentity.generate();
+    async setup(host: string, canisterId: string, secretKey: string): Promise<void> {
+        const identity = Secp256k1KeyIdentity.fromSecretKey(hexStingToArrayBuffer(secretKey));
         
         this.agent = await HttpAgent.create({
             identity: identity,
@@ -29,11 +28,13 @@ export class IcpExecutorImpl implements Executor {
         });
 
         this.inited = true;
+
+        console.log('ICP Executor ready');
     }
 
     execute(): void {
         if (!this.inited) {
-            throw new Error('IcpExecutorImpl is not fully initialized');
+            throw new Error('ICP Executor is not fully initialized');
         }
         // Send the message to the other side
     }

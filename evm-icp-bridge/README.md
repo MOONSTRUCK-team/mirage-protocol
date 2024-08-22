@@ -15,7 +15,6 @@ bun run index.ts
 This project was created using `bun init` in bun v1.1.24. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
 
 
-
 ### Docker image running
 
 In order to run the docker image, you need to build the image first. You can do this by running the following command:

@@ -7,11 +7,11 @@ export class PluginImpl implements Plugin {
     executor: Executor;
     router: Router;
 
-    constructor(listener: Listener, executor: Executor, router: Router) {
+    constructor(chainIdentifier: ChainId, listener: Listener, executor: Executor, router: Router) {
         this.listener = listener;
         this.executor = executor;
         this.router = router;
-        this.identifier = ChainId.Mainnet;
+        this.identifier = chainIdentifier;
         this.listener.setup(this.onMessageReceived);
     }
 
