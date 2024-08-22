@@ -1,4 +1,4 @@
-### Id hash generation
+### Message Id hash generation
 
 Id = keccak(abi.encodePacked(nonce,srcChainId,destChainId,contract,tokenId))
 

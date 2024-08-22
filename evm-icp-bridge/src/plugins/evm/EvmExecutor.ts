@@ -11,9 +11,6 @@ export class EvmExecutorImpl implements Executor {
     }
 
     execute(): void {
-        const provider = new ethers.JsonRpcProvider(this.rpcUrl);
-        this.wallet.connect(provider);
-        // execute the message
-
+        throw new Error('Method not implemented.');
     }
 }

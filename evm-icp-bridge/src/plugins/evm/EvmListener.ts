@@ -2,7 +2,6 @@ import { ethers, type AddressLike } from 'ethers';
 import { type Message, type EvmListener , ChainId} from '../../core/Types';
 import { EvmBridgeContract__factory } from '../../../types/ethers-contracts/factories/EvmBridgeContract__factory';
 import type { Bridge } from '../../../types/ethers-contracts/EvmBridgeContract';
-import type { BytesLike } from 'ethers';
 import type { BigNumberish } from 'ethers';
 
 export class EvmListenerImpl implements EvmListener {
@@ -15,11 +14,9 @@ export class EvmListenerImpl implements EvmListener {
     }
 
     setup(onMessageReceivedCb: (message: Message) => void): void {
-        // setup listener
         const provider = new ethers.JsonRpcProvider(this.rpcUrl);
         const contractInstance = EvmBridgeContract__factory.connect(this.contract.toString(), provider);
 
-        // Set up event listeners or other initialization logic
         contractInstance.on(contractInstance.filters.messageSend, (id: BigNumberish, messageData: Bridge.MessageStruct) => {
             const msg = this.parseMessage(id, messageData);
             onMessageReceivedCb(msg);
@@ -44,6 +41,7 @@ export class EvmListenerImpl implements EvmListener {
         if (chainId === BigInt(1)) {
             return ChainId.Mainnet;
         } else {
+            // TODO Define the magic ICP chain ID
             return ChainId.ICP;
         }
     }

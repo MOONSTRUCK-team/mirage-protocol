@@ -1,5 +1,6 @@
 import type { Message, Plugin, Router } from "./Types";
 import { EnvReader, Keys } from '../utils/envReader';
+import { PluginImpl } from "../plugins/common/Plugin";
 import * as Evm from '../plugins/evm/index';
 
 export class Core implements Router { 
@@ -15,12 +16,12 @@ export class Core implements Router {
        console.log('Message received: ', message.toString());
     }
 
-    setupEvmPlugin(): Evm.EvmPlugin {
+    setupEvmPlugin(): PluginImpl {
         const rpcProvider = EnvReader.get(Keys.EVM_RPC_PROVIDER);
         const contract = EnvReader.get(Keys.EVM_BRIDGE_CONTRACT_ADDRESS);
         const signerKey = EnvReader.get(Keys.EVM_EXECUTOR_PRIVATE_KEY);
 
-        return new Evm.EvmPlugin(
+        return new PluginImpl(
             new Evm.EvmListenerImpl(rpcProvider, contract),
             new Evm.EvmExecutorImpl(rpcProvider, signerKey),
             this

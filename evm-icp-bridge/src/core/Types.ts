@@ -3,7 +3,7 @@ import { type AddressLike } from "ethers"
 
 export interface Plugin {
     identifier: ChainId;
-    listener: EvmListener | IcpListener;
+    listener: Listener;
     router: Router;
     executor: Executor;
 }
@@ -27,12 +27,15 @@ export interface Router {
     routeMessage(message: Message): void;
 }
 
-
-export interface EvmListener {
-    rpcUrl: string;
-    contract: AddressLike;
+export interface Listener {
     setup(onMessageReceivedCb: any): void;
 }
 
+
+export interface EvmListener extends Listener {
+    rpcUrl: string;
+    contract: AddressLike;
+}
+
 // Will need to implement a webhook to be triggered by the ICP chain
-export interface IcpListener {}
+export interface IcpListener extends Listener {}
