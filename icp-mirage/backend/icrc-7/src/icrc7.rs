@@ -72,6 +72,14 @@ thread_local! {
     static CONTRACT: RefCell<Option<NFTContract>> = RefCell::new(None);
 }
 
+// Allows thread-safe access to the `CONTRACT` state via a closure.
+pub fn with_contract<F, R>(f: F) -> R
+where
+    F: FnOnce(&mut Option<NFTContract>) -> R,
+{
+    CONTRACT.with(|contract| f(&mut contract.borrow_mut()))
+}
+
 // ========== NFT Contract ==========
 
 pub struct NFTContract {
