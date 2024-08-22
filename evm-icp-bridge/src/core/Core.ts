@@ -35,10 +35,11 @@ export class Core implements Router {
         const host = EnvReader.get(Keys.ICP_HOST_URL);
         const canisterId = EnvReader.get(Keys.ICP_CANISTER_ID);
         const secretKey = EnvReader.get(Keys.ICP_EXECUTOR_SECRET_KEY);
+        const port = Number(EnvReader.get(Keys.ICP_LISTENER_PORT));
 
         return new PluginImpl(
             ChainId.ICP,
-            new Icp.IcpListenerImpl(),
+            new Icp.IcpListenerImpl(port),
             new Icp.IcpExecutorImpl(host, canisterId, secretKey),
             this
         );

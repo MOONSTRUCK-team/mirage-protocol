@@ -7,6 +7,7 @@ export enum Keys {
     ICP_HOST_URL = 'ICP_HOST_URL',
     ICP_CANISTER_ID = 'ICP_CANISTER_ID',
     ICP_EXECUTOR_SECRET_KEY = 'ICP_EXECUTOR_SECRET_KEY',
+    ICP_LISTENER_PORT = 'ICP_LISTENER_PORT',
 }
 
 export class EnvReader {

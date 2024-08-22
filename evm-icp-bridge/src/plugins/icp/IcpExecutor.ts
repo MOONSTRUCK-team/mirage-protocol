@@ -6,8 +6,8 @@ import { fromHexString as hexStingToArrayBuffer } from '@dfinity/candid';
 
 // TODO Write a proper bridge interface and generate the proper output for the factory
 export class IcpExecutorImpl implements Executor {
-    agent: HttpAgent | undefined;
-    actor: Actor | undefined;
+    private agent: HttpAgent | undefined;
+    private actor: Actor | undefined;
 
     constructor(host: string, canisterId: string, secretKey: string) {
         this.setup(host, canisterId, secretKey);
