@@ -6,7 +6,7 @@ import * as Icp from '../plugins/icp/index';
 import { ChainId } from "./Types";
 
 export class Core implements Router { 
-    plugins: Plugin[] = [];
+    private plugins: Plugin[] = [];
 
     async run(): Promise<void> { 
         console.log('Initing Core');

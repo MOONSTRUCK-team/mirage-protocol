@@ -25,22 +25,25 @@ export declare namespace Bridge {
     nonce: BigNumberish;
     srcChainId: BigNumberish;
     destChainId: BigNumberish;
-    contract: AddressLike;
+    destAddress: string;
     tokenId: BigNumberish;
+    contract: AddressLike;
   };
 
   export type MessageStructOutput = [
     nonce: bigint,
     srcChainId: bigint,
     destChainId: bigint,
-    contract: string,
-    tokenId: bigint
+    destAddress: string,
+    tokenId: bigint,
+    contract: string
   ] & {
     nonce: bigint;
     srcChainId: bigint;
     destChainId: bigint;
-    contract: string;
+    destAddress: string;
     tokenId: bigint;
+    contract: string;
   };
 }
 

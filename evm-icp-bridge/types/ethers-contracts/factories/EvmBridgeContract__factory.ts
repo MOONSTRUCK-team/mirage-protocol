@@ -36,14 +36,19 @@ const _abi = [
             type: "uint256",
           },
           {
-            internalType: "address",
-            name: "contract",
-            type: "address",
+            internalType: "string",
+            name: "destAddress",
+            type: "string",
           },
           {
             internalType: "uint256",
             name: "tokenId",
             type: "uint256",
+          },
+          {
+            internalType: "address",
+            name: "contract",
+            type: "address",
           },
         ],
         internalType: "struct Bridge.Message",

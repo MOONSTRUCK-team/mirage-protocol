@@ -1,12 +1,12 @@
-import { ethers, type AddressLike } from 'ethers';
-import { type Message, type EvmListener , ChainId} from '../../core/Types';
+import { JsonRpcProvider, type AddressLike, type BigNumberish } from 'ethers';
+import { type Message, type Listener, ChainId} from '../../core/Types';
 import { EvmBridgeContract__factory } from '../../../types/ethers-contracts/factories/EvmBridgeContract__factory';
 import type { Bridge } from '../../../types/ethers-contracts/EvmBridgeContract';
-import type { BigNumberish } from 'ethers';
+import { getChainId } from '../../core/Utils';
 
-export class EvmListenerImpl implements EvmListener {
-    rpcUrl: string;
-    contract: AddressLike;
+export class EvmListenerImpl implements Listener {
+    private rpcUrl: string;
+    private contract: AddressLike;
 
     constructor(rpcUrl: string, contract: AddressLike) {
         this.rpcUrl = rpcUrl;
@@ -14,12 +14,17 @@ export class EvmListenerImpl implements EvmListener {
     }
 
     setup(onMessageReceivedCb: (message: Message) => void): void {
-        const provider = new ethers.JsonRpcProvider(this.rpcUrl);
+        const provider = new JsonRpcProvider(this.rpcUrl);
         const contractInstance = EvmBridgeContract__factory.connect(this.contract.toString(), provider);
 
         contractInstance.on(contractInstance.filters.messageSend, (id: BigNumberish, messageData: Bridge.MessageStruct) => {
-            const msg = this.parseMessage(id, messageData);
-            onMessageReceivedCb(msg);
+            try {
+                const msg = this.parseMessage(id, messageData);
+                onMessageReceivedCb(msg);
+            }
+            catch (e) {
+                console.error(e);
+            }
         });
 
         console.log('EVM Listener is set up');
@@ -27,22 +32,13 @@ export class EvmListenerImpl implements EvmListener {
 
     parseMessage(messageId: BigNumberish, message: Bridge.MessageStruct): Message {
         return {
-            // TODO Check if this will properly parse the BigInt values
             id: BigInt(messageId),
             nonce: BigInt(message.nonce),
-            srcChainId: this.getChainId(BigInt(message.srcChainId)),
-            destChainId: ChainId.ICP,
+            srcChainId: getChainId(Number(message.srcChainId)),
+            destChainId: getChainId(Number(message.destChainId)),
+            destAddress: message.destAddress,
             contract: message.contract,
             tokenId: BigInt(message.tokenId)
         };
-    }
-
-    getChainId(chainId: bigint): ChainId {
-        if (chainId === BigInt(1)) {
-            return ChainId.Mainnet;
-        } else {
-            // TODO Define the magic ICP chain ID
-            return ChainId.ICP;
-        }
     }
 }
