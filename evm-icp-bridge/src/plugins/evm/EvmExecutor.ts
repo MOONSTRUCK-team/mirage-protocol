@@ -7,7 +7,7 @@ export class EvmExecutorImpl implements Executor {
 
     constructor(rpcUrl: string, signerKey: string) {
         this.rpcUrl = rpcUrl;
-        this.wallet = new ethers.Wallet(signerKey)
+        this.wallet = new ethers.Wallet(signerKey);
     }
 
     execute(): void {

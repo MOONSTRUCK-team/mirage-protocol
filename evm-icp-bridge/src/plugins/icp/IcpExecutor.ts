@@ -8,7 +8,6 @@ import { fromHexString as hexStingToArrayBuffer } from '@dfinity/candid';
 export class IcpExecutorImpl implements Executor {
     agent: HttpAgent | undefined;
     actor: Actor | undefined;
-    inited: boolean = false;
 
     constructor(host: string, canisterId: string, secretKey: string) {
         this.setup(host, canisterId, secretKey);
@@ -16,7 +15,6 @@ export class IcpExecutorImpl implements Executor {
 
     async setup(host: string, canisterId: string, secretKey: string): Promise<void> {
         const identity = Secp256k1KeyIdentity.fromSecretKey(hexStingToArrayBuffer(secretKey));
-        
         this.agent = await HttpAgent.create({
             identity: identity,
             host: host,
@@ -27,15 +25,17 @@ export class IcpExecutorImpl implements Executor {
             canisterId: canisterId,
         });
 
-        this.inited = true;
-
         console.log('ICP Executor ready');
     }
 
     execute(): void {
-        if (!this.inited) {
+        if (!this.isInitialized()) {
             throw new Error('ICP Executor is not fully initialized');
         }
         // Send the message to the other side
+    }
+
+    isInitialized(): boolean {
+        return this.actor !== undefined && this.agent !== undefined;
     }
 }

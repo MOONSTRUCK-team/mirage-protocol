@@ -8,13 +8,12 @@ import { ChainId } from "./Types";
 export class Core implements Router { 
     plugins: Plugin[] = [];
 
-    constructor() {
+    async run(): Promise<void> { 
         console.log('Initing Core');
         this.plugins.push(this.setupEvmPlugin());
         this.plugins.push(this.setupIcpPlugin());
-        console.log('Core is ready');
+     }
 
-    }
     routeMessage(message: Message): void {
        console.log('Message received: ', message.toString());
     }
