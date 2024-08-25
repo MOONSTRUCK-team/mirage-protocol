@@ -12,10 +12,12 @@ export class PluginImpl implements Plugin {
         this.executor = executor;
         this.router = router;
         this.identifier = chainIdentifier;
+
+        this.onMessageReceived.bind(this);
         this.listener.setup(this.onMessageReceived);
     }
 
-    onMessageReceived(message: Message): void {
-        this.router.routeMessage(message)
+    onMessageReceived = (message: Message): void => {
+        this.router.routeMessage(message);
     }
 }

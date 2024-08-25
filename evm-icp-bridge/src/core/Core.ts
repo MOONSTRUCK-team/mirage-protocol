@@ -1,22 +1,20 @@
 import type { Message, Plugin, Router } from "./Types";
 import { EnvReader, Keys } from '../utils/envReader';
 import { PluginImpl } from "../plugins/common/Plugin";
+import { RouterImpl } from "./Router";
 import * as Evm from '../plugins/evm/index';
 import * as Icp from '../plugins/icp/index';
 import { ChainId } from "./Types";
 
-export class Core implements Router { 
-    private plugins: Plugin[] = [];
+export class Core { 
+    private plugins = new Map<number, Plugin>();
+    private router = new RouterImpl(this);
 
     async run(): Promise<void> { 
         console.log('Initing Core');
-        this.plugins.push(this.setupEvmPlugin());
-        this.plugins.push(this.setupIcpPlugin());
+        this.plugins.set(ChainId.Ethereum, this.setupEvmPlugin());
+        this.plugins.set(ChainId.ICP, this.setupIcpPlugin());
      }
-
-    routeMessage(message: Message): void {
-       console.log('Message received: ', message.toString());
-    }
 
     setupEvmPlugin(): PluginImpl {
         const rpcProvider = EnvReader.get(Keys.EVM_RPC_PROVIDER);
@@ -27,7 +25,7 @@ export class Core implements Router {
             ChainId.Ethereum,
             new Evm.EvmListenerImpl(rpcProvider, contract),
             new Evm.EvmExecutorImpl(rpcProvider, signerKey),
-            this
+            this.router
         );
     }
 
@@ -41,7 +39,11 @@ export class Core implements Router {
             ChainId.ICP,
             new Icp.IcpListenerImpl(port),
             new Icp.IcpExecutorImpl(host, canisterId, secretKey),
-            this
+            this.router
         );
+    }
+
+    getPlugin(chainId: ChainId): Plugin | undefined {
+        return this.plugins.get(chainId);
     }
 }

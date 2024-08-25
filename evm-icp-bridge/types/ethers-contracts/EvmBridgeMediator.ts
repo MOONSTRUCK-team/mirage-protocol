@@ -4,7 +4,9 @@
 import type {
   BaseContract,
   BigNumberish,
+  BytesLike,
   FunctionFragment,
+  Result,
   Interface,
   EventFragment,
   AddressLike,
@@ -18,16 +20,17 @@ import type {
   TypedEventLog,
   TypedLogDescription,
   TypedListener,
+  TypedContractMethod,
 } from "./common";
 
-export declare namespace Bridge {
+export declare namespace BridgeMediator {
   export type MessageStruct = {
     nonce: BigNumberish;
     srcChainId: BigNumberish;
     destChainId: BigNumberish;
     destAddress: string;
+    contractAddress: AddressLike;
     tokenId: BigNumberish;
-    contract: AddressLike;
   };
 
   export type MessageStructOutput = [
@@ -35,34 +38,48 @@ export declare namespace Bridge {
     srcChainId: bigint,
     destChainId: bigint,
     destAddress: string,
-    tokenId: bigint,
-    contract: string
+    contractAddress: string,
+    tokenId: bigint
   ] & {
     nonce: bigint;
     srcChainId: bigint;
     destChainId: bigint;
     destAddress: string;
+    contractAddress: string;
     tokenId: bigint;
-    contract: string;
   };
 }
 
-export interface EvmBridgeContractInterface extends Interface {
-  getEvent(nameOrSignatureOrTopic: "messageSend"): EventFragment;
+export interface EvmBridgeMediatorInterface extends Interface {
+  getFunction(nameOrSignature: "getNonce" | "sendMessage"): FunctionFragment;
+
+  getEvent(nameOrSignatureOrTopic: "MessageSend"): EventFragment;
+
+  encodeFunctionData(functionFragment: "getNonce", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "sendMessage",
+    values?: undefined
+  ): string;
+
+  decodeFunctionResult(functionFragment: "getNonce", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "sendMessage",
+    data: BytesLike
+  ): Result;
 }
 
-export namespace messageSendEvent {
+export namespace MessageSendEvent {
   export type InputTuple = [
-    id: BigNumberish,
-    messageData: Bridge.MessageStruct
+    id: BytesLike,
+    message: BridgeMediator.MessageStruct
   ];
   export type OutputTuple = [
-    id: bigint,
-    messageData: Bridge.MessageStructOutput
+    id: string,
+    message: BridgeMediator.MessageStructOutput
   ];
   export interface OutputObject {
-    id: bigint;
-    messageData: Bridge.MessageStructOutput;
+    id: string;
+    message: BridgeMediator.MessageStructOutput;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -70,11 +87,11 @@ export namespace messageSendEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export interface EvmBridgeContract extends BaseContract {
-  connect(runner?: ContractRunner | null): EvmBridgeContract;
+export interface EvmBridgeMediator extends BaseContract {
+  connect(runner?: ContractRunner | null): EvmBridgeMediator;
   waitForDeployment(): Promise<this>;
 
-  interface: EvmBridgeContractInterface;
+  interface: EvmBridgeMediatorInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -113,28 +130,39 @@ export interface EvmBridgeContract extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  getNonce: TypedContractMethod<[], [bigint], "view">;
+
+  sendMessage: TypedContractMethod<[], [void], "nonpayable">;
+
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
+  getFunction(
+    nameOrSignature: "getNonce"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "sendMessage"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+
   getEvent(
-    key: "messageSend"
+    key: "MessageSend"
   ): TypedContractEvent<
-    messageSendEvent.InputTuple,
-    messageSendEvent.OutputTuple,
-    messageSendEvent.OutputObject
+    MessageSendEvent.InputTuple,
+    MessageSendEvent.OutputTuple,
+    MessageSendEvent.OutputObject
   >;
 
   filters: {
-    "messageSend(uint256,tuple)": TypedContractEvent<
-      messageSendEvent.InputTuple,
-      messageSendEvent.OutputTuple,
-      messageSendEvent.OutputObject
+    "MessageSend(bytes32,tuple)": TypedContractEvent<
+      MessageSendEvent.InputTuple,
+      MessageSendEvent.OutputTuple,
+      MessageSendEvent.OutputObject
     >;
-    messageSend: TypedContractEvent<
-      messageSendEvent.InputTuple,
-      messageSendEvent.OutputTuple,
-      messageSendEvent.OutputObject
+    MessageSend: TypedContractEvent<
+      MessageSendEvent.InputTuple,
+      MessageSendEvent.OutputTuple,
+      MessageSendEvent.OutputObject
     >;
   };
 }

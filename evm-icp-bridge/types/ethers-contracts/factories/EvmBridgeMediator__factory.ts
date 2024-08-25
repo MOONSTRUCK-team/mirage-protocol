@@ -4,19 +4,39 @@
 
 import { Contract, Interface, type ContractRunner } from "ethers";
 import type {
-  EvmBridgeContract,
-  EvmBridgeContractInterface,
-} from "../EvmBridgeContract";
+  EvmBridgeMediator,
+  EvmBridgeMediatorInterface,
+} from "../EvmBridgeMediator";
 
 const _abi = [
+  {
+    inputs: [],
+    name: "getNonce",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "sendMessage",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
   {
     anonymous: false,
     inputs: [
       {
-        internalType: "uint256",
-        name: "id",
-        type: "uint256",
         indexed: true,
+        internalType: "bytes32",
+        name: "id",
+        type: "bytes32",
       },
       {
         components: [
@@ -41,35 +61,36 @@ const _abi = [
             type: "string",
           },
           {
+            internalType: "address",
+            name: "contractAddress",
+            type: "address",
+          },
+          {
             internalType: "uint256",
             name: "tokenId",
             type: "uint256",
           },
-          {
-            internalType: "address",
-            name: "contract",
-            type: "address",
-          },
         ],
-        internalType: "struct Bridge.Message",
-        name: "messageData",
+        indexed: false,
+        internalType: "struct BridgeMediator.Message",
+        name: "message",
         type: "tuple",
       },
     ],
-    name: "messageSend",
+    name: "MessageSend",
     type: "event",
   },
 ] as const;
 
-export class EvmBridgeContract__factory {
+export class EvmBridgeMediator__factory {
   static readonly abi = _abi;
-  static createInterface(): EvmBridgeContractInterface {
-    return new Interface(_abi) as EvmBridgeContractInterface;
+  static createInterface(): EvmBridgeMediatorInterface {
+    return new Interface(_abi) as EvmBridgeMediatorInterface;
   }
   static connect(
     address: string,
     runner?: ContractRunner | null
-  ): EvmBridgeContract {
-    return new Contract(address, _abi, runner) as unknown as EvmBridgeContract;
+  ): EvmBridgeMediator {
+    return new Contract(address, _abi, runner) as unknown as EvmBridgeMediator;
   }
 }

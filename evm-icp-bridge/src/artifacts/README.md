@@ -1,12 +1,14 @@
 ### Message Id hash generation
 
-Id = keccak(abi.encodePacked(nonce,srcChainId,destChainId,contract,tokenId))
+Id = keccak(abi.encodePacked(nonce,srcChainId,destChainId,destAddress,contract,tokenId))
 
 `nonce` is a increment number that is used to avoid hash collision. It is incremented by 1 for each message.
 
 `srcChainId` is the chain id of the source chain.
 
 `destChainId` is the chain id of the destination chain.
+
+`destAddress` is the target address on the destination chain to mint/burn tokens.
 
 `contract` is the contract address on the source chain.
 

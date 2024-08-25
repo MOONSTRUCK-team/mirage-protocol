@@ -1,8 +1,9 @@
-import { JsonRpcProvider, type AddressLike, type BigNumberish } from 'ethers';
-import { type Message, type Listener, ChainId} from '../../core/Types';
-import { EvmBridgeContract__factory } from '../../../types/ethers-contracts/factories/EvmBridgeContract__factory';
-import type { Bridge } from '../../../types/ethers-contracts/EvmBridgeContract';
+import { JsonRpcProvider, type AddressLike, type BytesLike } from 'ethers';
+import { type Message, type Listener} from '../../core/Types';
 import { getChainId } from '../../core/Utils';
+
+import { EvmBridgeMediator__factory } from '../../../types/ethers-contracts/factories/EvmBridgeMediator__factory';
+import type { BridgeMediator } from '../../../types/ethers-contracts/EvmBridgeMediator';
 
 export class EvmListenerImpl implements Listener {
     private rpcUrl: string;
@@ -14,10 +15,11 @@ export class EvmListenerImpl implements Listener {
     }
 
     setup(onMessageReceivedCb: (message: Message) => void): void {
-        const provider = new JsonRpcProvider(this.rpcUrl);
-        const contractInstance = EvmBridgeContract__factory.connect(this.contract.toString(), provider);
-
-        contractInstance.on(contractInstance.filters.messageSend, (id: BigNumberish, messageData: Bridge.MessageStruct) => {
+        const provider = new JsonRpcProvider(this.rpcUrl, undefined, { staticNetwork: true });
+        const contractInstance = EvmBridgeMediator__factory.connect(this.contract.toString(), provider);
+       
+        contractInstance.on(contractInstance.filters.MessageSend, (id: BytesLike, messageData: BridgeMediator.MessageStruct) => {      
+            console.info('Message received from the EVM', id);
             try {
                 const msg = this.parseMessage(id, messageData);
                 onMessageReceivedCb(msg);
@@ -27,17 +29,17 @@ export class EvmListenerImpl implements Listener {
             }
         });
 
-        console.log('EVM Listener is set up');
+        console.log('EvmListner is listening on', this.rpcUrl);
     }
 
-    parseMessage(messageId: BigNumberish, message: Bridge.MessageStruct): Message {
+    parseMessage(messageId: BytesLike, message: BridgeMediator.MessageStruct): Message {
         return {
-            id: BigInt(messageId),
+            id: String(messageId),
             nonce: BigInt(message.nonce),
             srcChainId: getChainId(Number(message.srcChainId)),
             destChainId: getChainId(Number(message.destChainId)),
             destAddress: message.destAddress,
-            contract: message.contract,
+            contract: message.contractAddress,
             tokenId: BigInt(message.tokenId)
         };
     }

@@ -32,7 +32,8 @@ export class IcpExecutorImpl implements Executor {
         if (!this.isInitialized()) {
             throw new Error('ICP Executor is not fully initialized');
         }
-        // Send the message to the other side
+
+        console.error('ICP Executor is not fully implemented');
     }
 
     isInitialized(): boolean {

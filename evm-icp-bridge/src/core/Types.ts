@@ -1,6 +1,5 @@
 import { type AddressLike } from "ethers"
 
-
 export interface Plugin {
     identifier: ChainId;
     listener: Listener;
@@ -8,13 +7,13 @@ export interface Plugin {
     executor: Executor;
 }
 
-// TODO Define the ids for the chains
+// TODO Define the ids for the chains (maybe make them unique, hashes of the names?)
 // EVM chains have unique ids, but ICP is not EVM based and does not have a chain id
 // The registry of supported chains should be maintained in the core and propably on-chain (but can be skipped, just do not forward the message)
-export enum ChainId { Ethereum = 1, ICP = 999999 }
+export enum ChainId { Ethereum = 1, ICP = 2 }
 
 export interface Message {
-    id: bigint;
+    id: string;
     nonce: bigint;
     srcChainId: ChainId;
     destChainId: ChainId;
@@ -24,7 +23,7 @@ export interface Message {
 }
 
 export interface Executor {
-    execute(): void;
+    execute(message: Message): void;
 }
 
 export interface Router {
