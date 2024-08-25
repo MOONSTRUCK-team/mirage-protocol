@@ -1,0 +1,17 @@
+{
+  "canisters": {
+    "bridge_mediator": {
+      "candid": "src/bridge_mediator/bridge_mediator.did",
+      "package": "bridge_mediator",
+      "type": "rust"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}

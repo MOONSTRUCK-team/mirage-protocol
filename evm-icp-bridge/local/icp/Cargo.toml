@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "src/bridge_mediator"
+]
+resolver = "2"
