@@ -16,3 +16,15 @@
     ```shell
     cast send 0x5FbDB2315678afecb367f032d93F642f64180aa3 0xe5aed28a --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
     ```
+
+
+### Running in container
+
+1. Build image
+    ```shell
+    docker build -t evm-test-setup .
+    ```
+2. Run container
+    ```shell
+    docker run -dit evm-test-setup
+    ```
