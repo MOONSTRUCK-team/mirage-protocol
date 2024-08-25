@@ -1,40 +1,19 @@
-use std::cell::RefCell;
 use std::string::String;
+use candid::CandidType;
+use serde::Deserialize;
 
-thread_local! {
-    static NAME: RefCell<String> = RefCell::new(String::from("John Doe"));
-}
-
-// Assuming BigNumberish is a type alias for u64
-type BigNumberish = u64;
-
-// Assuming AddressLike is a type alias for String
-type AddressLike = String;
-
-// Assuming BytesLike is a type alias for Vec<u8>
-type BytesLike = Vec<u8>;
-
-// #[derive(serde::Deserialize)]
-// struct Message {
-//     nonce: BigNumberish,
-//     src_chain_id: BigNumberish,
-//     dest_chain_id: BigNumberish,
-//     dest_address: String,
-//     contract_address: AddressLike,
-//     token_id: BigNumberish,
-// }
-
-#[ic_cdk::query]
-fn get_name() -> String {
-    NAME.with(|name| (*name.borrow()).clone())
+#[derive(CandidType, Deserialize)]
+struct Message {
+    id: String,
+    nonce: u64,
+    src_chain_id: u64,
+    dest_chain_id: u64,
+    dest_address: String,
+    contract_address: String,
+    token_id: u64,
 }
 
 #[ic_cdk::update]
-fn set_name(new_name: String) {
-    NAME.with(|name| *name.borrow_mut() = new_name);
+fn execute_message(msg: Message) {
+    ic_cdk::print(format!("Message received with id: {}", msg.id));
 }
-
-// #[ic_cdk::update]
-// fn execute(id: String, _msg: Message) {
-//     ic_cdk::print(format!("Message received with id: {}", id));
-// }

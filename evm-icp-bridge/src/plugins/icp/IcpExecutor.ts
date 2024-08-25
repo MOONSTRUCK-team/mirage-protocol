@@ -1,13 +1,13 @@
-import type { Executor } from '../../core/Types';
-import { Actor, HttpAgent } from "@dfinity/agent";
+import type { Executor, Message } from '../../core/Types';
+import { type ActorSubclass, HttpAgent } from "@dfinity/agent";
 import { Secp256k1KeyIdentity } from "@dfinity/identity-secp256k1";
-import { idlFactory } from '../../artifacts/IcpBridgeCanister'
+import { createActor } from '../../artifacts/icp/bridge_mediator';
 import { fromHexString as hexStingToArrayBuffer } from '@dfinity/candid';
+import type { _SERVICE as BridgeMediator_Service, Message as BridgeMediator_Message } from '../../artifacts/icp/bridge_mediator/bridge_mediator.did';
 
-// TODO Write a proper bridge interface and generate the proper output for the factory
 export class IcpExecutorImpl implements Executor {
     private agent: HttpAgent | undefined;
-    private actor: Actor | undefined;
+    private actor: ActorSubclass<BridgeMediator_Service> | undefined;
 
     constructor(host: string, canisterId: string, secretKey: string) {
         this.setup(host, canisterId, secretKey);
@@ -19,21 +19,34 @@ export class IcpExecutorImpl implements Executor {
             identity: identity,
             host: host,
             shouldFetchRootKey: true,
-        })
-        this.actor = Actor.createActor(idlFactory, {
-            agent: this.agent,
-            canisterId: canisterId,
         });
 
+        this.actor = createActor(canisterId, {
+            agent: this.agent,
+        });
         console.log('ICP Executor ready');
     }
 
-    execute(): void {
+    async execute(message: Message): Promise<void> {
         if (!this.isInitialized()) {
             throw new Error('ICP Executor is not fully initialized');
         }
 
-        console.error('ICP Executor is not fully implemented');
+        const packedMessage: BridgeMediator_Message = {
+            id: message.id,
+            nonce: BigInt(message.nonce),
+            src_chain_id: BigInt(message.srcChainId),
+            dest_chain_id: BigInt(message.destChainId),
+            dest_address: message.destAddress,
+            contract_address: message.contract.toString(),
+            token_id: BigInt(message.tokenId),
+        }
+        try {
+            await this.actor?.execute_message(packedMessage);
+            console.log('Message executed on the ICP:', message.id);
+        } catch (e) {
+            console.error(e);
+        }
     }
 
     isInitialized(): boolean {

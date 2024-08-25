@@ -34,10 +34,11 @@ export class IcpListenerImpl implements Listener {
         const message =  await req.json();
         try {
             const parsedMessage: Message = {
-                id: BigInt(message.id),
+                id: String(message.id),
                 nonce: BigInt(message.nonce),
                 srcChainId: message.srcChainId,
                 destChainId: message.destChainId,
+                destAddress: message.destAddress,
                 contract: message.contract,
                 tokenId: BigInt(message.tokenId),
             };
