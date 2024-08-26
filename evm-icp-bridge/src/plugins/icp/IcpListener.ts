@@ -35,6 +35,7 @@ export class IcpListenerImpl implements Listener {
         try {
             const parsedMessage: Message = {
                 id: String(message.id),
+                opType: BigInt(message.opType),
                 nonce: BigInt(message.nonce),
                 srcChainId: message.srcChainId,
                 destChainId: message.destChainId,

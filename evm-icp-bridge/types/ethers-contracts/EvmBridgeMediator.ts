@@ -25,6 +25,7 @@ import type {
 
 export declare namespace BridgeMediator {
   export type MessageStruct = {
+    id: BytesLike;
     nonce: BigNumberish;
     opType: BigNumberish;
     srcChainId: BigNumberish;
@@ -35,6 +36,7 @@ export declare namespace BridgeMediator {
   };
 
   export type MessageStructOutput = [
+    id: string,
     nonce: bigint,
     opType: bigint,
     srcChainId: bigint,
@@ -43,6 +45,7 @@ export declare namespace BridgeMediator {
     contractAddress: string,
     tokenId: bigint
   ] & {
+    id: string;
     nonce: bigint;
     opType: bigint;
     srcChainId: bigint;
@@ -54,21 +57,52 @@ export declare namespace BridgeMediator {
 }
 
 export interface EvmBridgeMediatorInterface extends Interface {
-  getFunction(nameOrSignature: "getNonce" | "sendMessage"): FunctionFragment;
+  getFunction(
+    nameOrSignature: "executeMessage" | "getNonce" | "sendMessage"
+  ): FunctionFragment;
 
-  getEvent(nameOrSignatureOrTopic: "MessageSend"): EventFragment;
+  getEvent(
+    nameOrSignatureOrTopic: "MessageExecuted" | "MessageSend"
+  ): EventFragment;
 
+  encodeFunctionData(
+    functionFragment: "executeMessage",
+    values: [BridgeMediator.MessageStruct]
+  ): string;
   encodeFunctionData(functionFragment: "getNonce", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "sendMessage",
     values?: undefined
   ): string;
 
+  decodeFunctionResult(
+    functionFragment: "executeMessage",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "getNonce", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "sendMessage",
     data: BytesLike
   ): Result;
+}
+
+export namespace MessageExecutedEvent {
+  export type InputTuple = [
+    id: BytesLike,
+    message: BridgeMediator.MessageStruct
+  ];
+  export type OutputTuple = [
+    id: string,
+    message: BridgeMediator.MessageStructOutput
+  ];
+  export interface OutputObject {
+    id: string;
+    message: BridgeMediator.MessageStructOutput;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
 
 export namespace MessageSendEvent {
@@ -133,6 +167,12 @@ export interface EvmBridgeMediator extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  executeMessage: TypedContractMethod<
+    [message: BridgeMediator.MessageStruct],
+    [void],
+    "nonpayable"
+  >;
+
   getNonce: TypedContractMethod<[], [bigint], "view">;
 
   sendMessage: TypedContractMethod<[], [void], "nonpayable">;
@@ -142,12 +182,26 @@ export interface EvmBridgeMediator extends BaseContract {
   ): T;
 
   getFunction(
+    nameOrSignature: "executeMessage"
+  ): TypedContractMethod<
+    [message: BridgeMediator.MessageStruct],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
     nameOrSignature: "getNonce"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "sendMessage"
   ): TypedContractMethod<[], [void], "nonpayable">;
 
+  getEvent(
+    key: "MessageExecuted"
+  ): TypedContractEvent<
+    MessageExecutedEvent.InputTuple,
+    MessageExecutedEvent.OutputTuple,
+    MessageExecutedEvent.OutputObject
+  >;
   getEvent(
     key: "MessageSend"
   ): TypedContractEvent<
@@ -157,6 +211,17 @@ export interface EvmBridgeMediator extends BaseContract {
   >;
 
   filters: {
+    "MessageExecuted(bytes32,tuple)": TypedContractEvent<
+      MessageExecutedEvent.InputTuple,
+      MessageExecutedEvent.OutputTuple,
+      MessageExecutedEvent.OutputObject
+    >;
+    MessageExecuted: TypedContractEvent<
+      MessageExecutedEvent.InputTuple,
+      MessageExecutedEvent.OutputTuple,
+      MessageExecutedEvent.OutputObject
+    >;
+
     "MessageSend(bytes32,tuple)": TypedContractEvent<
       MessageSendEvent.InputTuple,
       MessageSendEvent.OutputTuple,

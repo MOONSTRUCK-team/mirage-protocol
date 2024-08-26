@@ -3,7 +3,7 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "typechain": "typechain --target ethers-v6 ./src/artifacts/*.json"
+    "typechain": "typechain --target ethers-v6 ./src/artifacts/evm/*.json"
   },
   "devDependencies": {
     "@types/bun": "latest",

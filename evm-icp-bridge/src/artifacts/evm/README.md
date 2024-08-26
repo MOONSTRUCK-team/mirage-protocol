@@ -2,6 +2,8 @@
 
 Id = keccak(abi.encodePacked(nonce,opType,srcChainId,destChainId,destAddress,contract,tokenId))
 
+`id` is the hash of the message. It is used to verify the message integrity.
+
 `nonce` is a increment number that is used to avoid hash collision. It is incremented by 1 for each message.
 
 `opType` is the operation type. It can be either `mint` or `burn` atm

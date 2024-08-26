@@ -16,9 +16,9 @@ export class EvmListenerImpl implements Listener {
 
     setup(onMessageReceivedCb: (message: Message) => void): void {
         const provider = new JsonRpcProvider(this.rpcUrl, undefined, { staticNetwork: true });
-        const contractInstance = EvmBridgeMediator__factory.connect(this.contract.toString(), provider);
+        const bridgeMediator = EvmBridgeMediator__factory.connect(this.contract.toString(), provider);
        
-        contractInstance.on(contractInstance.filters.MessageSend, (id: BytesLike, messageData: BridgeMediator.MessageStruct) => {      
+        bridgeMediator.on(bridgeMediator.filters.MessageSend, (id: BytesLike, messageData: BridgeMediator.MessageStruct) => {      
             console.info('Message received from the EVM', id);
             try {
                 const msg = this.parseMessage(id, messageData);
