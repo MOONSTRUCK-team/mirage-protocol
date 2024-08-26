@@ -6,6 +6,7 @@ contract BridgeMediator {
 
     struct Message {
         uint256 nonce;
+        uint8 opType;
         uint256 srcChainId;
         uint256 destChainId;
         string destAddress;
@@ -19,6 +20,7 @@ contract BridgeMediator {
         Message memory message = Message(
             ++_nonce,
             1,
+            1,
             2,
             "0x1234567890",
             address(this),
@@ -26,6 +28,7 @@ contract BridgeMediator {
         );
         bytes32 messageId = keccak256(abi.encodePacked(
             message.nonce,
+            message.opType,
             message.srcChainId,
             message.destChainId,
             message.destAddress,

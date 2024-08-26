@@ -35,6 +35,7 @@ export class IcpExecutorImpl implements Executor {
         const packedMessage: BridgeMediator_Message = {
             id: message.id,
             nonce: BigInt(message.nonce),
+            op_type: Number(message.opType),
             src_chain_id: BigInt(message.srcChainId),
             dest_chain_id: BigInt(message.destChainId),
             dest_address: message.destAddress,

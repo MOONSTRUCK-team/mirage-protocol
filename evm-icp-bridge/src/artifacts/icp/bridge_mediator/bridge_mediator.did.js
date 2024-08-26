@@ -7,6 +7,7 @@ export const idlFactory = ({ IDL }) => {
     'dest_address' : IDL.Text,
     'nonce' : IDL.Nat64,
     'contract_address' : IDL.Text,
+    'op_type' : IDL.Nat8,
   });
   return IDL.Service({ 'execute_message' : IDL.Func([Message], [], []) });
 };

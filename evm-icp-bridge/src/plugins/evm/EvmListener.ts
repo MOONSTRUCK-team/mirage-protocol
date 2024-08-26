@@ -35,6 +35,7 @@ export class EvmListenerImpl implements Listener {
     parseMessage(messageId: BytesLike, message: BridgeMediator.MessageStruct): Message {
         return {
             id: String(messageId),
+            opType: BigInt(message.opType),
             nonce: BigInt(message.nonce),
             srcChainId: getChainId(Number(message.srcChainId)),
             destChainId: getChainId(Number(message.destChainId)),

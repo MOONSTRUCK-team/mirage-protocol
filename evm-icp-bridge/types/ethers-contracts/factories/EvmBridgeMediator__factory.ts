@@ -46,6 +46,11 @@ const _abi = [
             type: "uint256",
           },
           {
+            internalType: "uint8",
+            name: "opType",
+            type: "uint8",
+          },
+          {
             internalType: "uint256",
             name: "srcChainId",
             type: "uint256",

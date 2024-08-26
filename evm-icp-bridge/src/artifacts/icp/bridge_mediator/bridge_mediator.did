@@ -1,6 +1,7 @@
 type Message = record{
     id: text;
     nonce: nat64;
+    op_type: nat8;
     src_chain_id: nat64;
     dest_chain_id: nat64;
     dest_address: text;

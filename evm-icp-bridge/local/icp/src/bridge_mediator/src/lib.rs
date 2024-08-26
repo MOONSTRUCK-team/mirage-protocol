@@ -4,13 +4,14 @@ use serde::Deserialize;
 
 #[derive(CandidType, Deserialize)]
 struct Message {
-    id: String,
-    nonce: u64,
-    src_chain_id: u64,
-    dest_chain_id: u64,
-    dest_address: String,
-    contract_address: String,
-    token_id: u64,
+    id: String, // Unique identifier for the message
+    nonce: u64, // Unique message nonce
+    op_type: u8, // Operation type
+    src_chain_id: u64, // Source chain id
+    dest_chain_id: u64, // Destination chain id
+    dest_address: String, // Destination address
+    contract_address: String, // Contract address
+    token_id: u64, // Token id
 }
 
 #[ic_cdk::update]

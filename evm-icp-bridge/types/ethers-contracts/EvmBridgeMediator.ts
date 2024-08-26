@@ -26,6 +26,7 @@ import type {
 export declare namespace BridgeMediator {
   export type MessageStruct = {
     nonce: BigNumberish;
+    opType: BigNumberish;
     srcChainId: BigNumberish;
     destChainId: BigNumberish;
     destAddress: string;
@@ -35,6 +36,7 @@ export declare namespace BridgeMediator {
 
   export type MessageStructOutput = [
     nonce: bigint,
+    opType: bigint,
     srcChainId: bigint,
     destChainId: bigint,
     destAddress: string,
@@ -42,6 +44,7 @@ export declare namespace BridgeMediator {
     tokenId: bigint
   ] & {
     nonce: bigint;
+    opType: bigint;
     srcChainId: bigint;
     destChainId: bigint;
     destAddress: string;

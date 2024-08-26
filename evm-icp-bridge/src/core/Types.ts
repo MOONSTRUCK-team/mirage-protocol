@@ -12,9 +12,12 @@ export interface Plugin {
 // The registry of supported chains should be maintained in the core and propably on-chain (but can be skipped, just do not forward the message)
 export enum ChainId { Ethereum = 1, ICP = 2 }
 
+export enum OpType { Mint = 1, Burn = 2 }
+
 export interface Message {
     id: string;
     nonce: bigint;
+    opType: bigint;
     srcChainId: ChainId;
     destChainId: ChainId;
     destAddress: string;

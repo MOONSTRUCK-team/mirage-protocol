@@ -10,6 +10,7 @@ export interface Message {
   'dest_address' : string,
   'nonce' : bigint,
   'contract_address' : string,
+  'op_type' : number,
 }
 export interface _SERVICE {
   'execute_message' : ActorMethod<[Message], undefined>,
