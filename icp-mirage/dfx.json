@@ -1,11 +1,22 @@
 {
   "canisters": {
-    "icrc-7": {
+    "icrc7": {
+      "candid": "icrc7.did",
       "type": "rust",
-      "package": "icrc-7",
       "build": "cargo build --target wasm32-unknown-unknown --release",
-      "wasm": "target/wasm32-unknown-unknown/release/icrc-7.wasm",
-      "candid": "backend/icrc-7/icrc-7.did"
+      "wasm": "target/wasm32-unknown-unknown/release/icrc7.wasm"
+    },
+    "token_factory": {
+      "candid": "token_factory.did",
+      "type": "rust",
+      "build": "cargo build --target wasm32-unknown-unknown --release",
+      "wasm": "target/wasm32-unknown-unknown/release/token_factory.wasm"
+    },
+    "bridge_common_layer": {
+      "candid": "bridge_common_layer.did",
+      "type": "rust",
+      "build": "cargo build --target wasm32-unknown-unknown --release",
+      "wasm": "target/wasm32-unknown-unknown/release/bridge_common_layer.wasm"
     }
   },
   "defaults": {

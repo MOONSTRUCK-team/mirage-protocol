@@ -1,10 +1,9 @@
+use crate::bridge_common_layer::Message;
 use candid::{CandidType, Nat, Principal};
-use ic_cdk_macros::{query, update};
+use ic_cdk_macros::update;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashMap;
-
-// ========== Type Definitions ==========
 
 pub type Subaccount = [u8; 32];
 
@@ -16,23 +15,7 @@ pub struct Account {
 
 pub type TokenId = Nat;
 
-#[derive(Clone, Debug, Serialize, Deserialize, CandidType)]
-pub enum Value {
-    Blob(Vec<u8>),
-    Text(String),
-    Nat(Nat),
-    Int(i128),
-    Array(Vec<Value>),
-    Map(Vec<(String, Value)>),
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, CandidType)]
-pub struct MetadataEntry {
-    pub key: String,
-    pub value: Value,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, CandidType)]
+#[derive(Clone, Debug, Serialize, Deserialize, CandidType, PartialEq)]
 pub struct MintArgs {
     pub to: Account,
     pub token_id: TokenId,
@@ -41,13 +24,9 @@ pub struct MintArgs {
 
 #[derive(Clone, Debug, Serialize, Deserialize, CandidType)]
 pub struct TransferArgs {
-    pub spender_subaccount: Option<Subaccount>,
     pub from: Account,
     pub to: Account,
     pub token_ids: Vec<TokenId>,
-    pub memo: Option<Vec<u8>>,
-    pub created_at_time: Option<u64>,
-    pub is_atomic: Option<bool>,
 }
 
 #[derive(Debug, Clone, CandidType, Serialize, Deserialize, PartialEq)]
@@ -59,346 +38,181 @@ pub enum TransferResult {
 #[derive(Clone, Debug, Serialize, Deserialize, CandidType, PartialEq)]
 pub enum TransferError {
     Unauthorized { token_ids: Vec<TokenId> },
-    TooOld,
-    CreatedInFuture { ledger_time: u64 },
-    Duplicate { duplicate_of: Nat },
-    TemporarilyUnavailable,
-    GenericError { error_code: Nat, message: String },
+    TokenNotFound { token_id: TokenId },
+    InsufficientBalance { token_id: TokenId },
+    InvalidMetadata { token_id: TokenId },
 }
 
-// ========== Global State ==========
-
+// Global state for the NFT contract
 thread_local! {
     static CONTRACT: RefCell<Option<NFTContract>> = RefCell::new(None);
 }
 
-// Allows thread-safe access to the `CONTRACT` state via a closure.
-pub fn with_contract<F, R>(f: F) -> R
-where
-    F: FnOnce(&mut Option<NFTContract>) -> R,
-{
-    CONTRACT.with(|contract| f(&mut contract.borrow_mut()))
+// Metadata structure with PartialEq derived
+#[derive(Clone, Debug, Serialize, Deserialize, CandidType, PartialEq)]
+pub struct MetadataEntry {
+    pub key: String,
+    pub value: String,
 }
 
-// ========== NFT Contract ==========
-
+// NFT Contract definition
 pub struct NFTContract {
     pub name: String,
     pub symbol: String,
-    pub description: Option<String>,
-    pub image: Option<String>,
     pub total_supply: Nat,
-    pub max_supply: Option<Nat>,
-    pub royalties: Option<u16>,
-    pub royalty_recipient: Option<Account>,
-    pub collection_metadata: Vec<MetadataEntry>,
     pub balances: HashMap<Account, Vec<TokenId>>,
     pub metadata: HashMap<TokenId, Vec<MetadataEntry>>,
 }
 
 impl NFTContract {
-    // Dynamic constructor with user-supplied values
-    pub fn new(
-        name: String,
-        symbol: String,
-        description: Option<String>,
-        image: Option<String>,
-        max_supply: Option<Nat>,
-        royalties: Option<u16>,
-        royalty_recipient: Option<Account>,
-        collection_metadata: Vec<MetadataEntry>,
-    ) -> Self {
+    // Initialize the contract
+    pub fn new(name: String, symbol: String) -> Self {
         Self {
             name,
             symbol,
-            description,
-            image,
             total_supply: Nat::from(0u64),
-            max_supply,
-            royalties,
-            royalty_recipient,
-            collection_metadata,
             balances: HashMap::new(),
             metadata: HashMap::new(),
         }
     }
 
-    // Mint function
+    // Mint tokens with metadata validation
     pub fn mint(&mut self, mint_args: MintArgs) -> Result<Nat, TransferError> {
+        // Check if token already exists
         if self.metadata.contains_key(&mint_args.token_id) {
-            return Err(TransferError::GenericError {
-                error_code: Nat::from(2u64),
-                message: "Token ID already exists".to_string(),
+            return Err(TransferError::TokenNotFound {
+                token_id: mint_args.token_id.clone(),
             });
         }
 
-        if let Some(supply_cap) = &self.max_supply {
-            if self.total_supply >= *supply_cap {
-                return Err(TransferError::GenericError {
-                    error_code: Nat::from(1u64),
-                    message: "Max supply reached".to_string(),
-                });
-            }
+        // Ensure that metadata is valid (example validation)
+        if mint_args.metadata.is_empty() {
+            return Err(TransferError::InvalidMetadata {
+                token_id: mint_args.token_id.clone(),
+            });
         }
 
-        let tokens = self
-            .balances
+        // Add the token to the balances of the recipient
+        self.balances
             .entry(mint_args.to.clone())
-            .or_insert_with(Vec::new);
-        tokens.push(mint_args.token_id.clone());
+            .or_insert_with(Vec::new)
+            .push(mint_args.token_id.clone());
 
+        // Add metadata
         self.metadata
             .insert(mint_args.token_id.clone(), mint_args.metadata.clone());
 
+        // Increase the total supply
         self.total_supply += Nat::from(1u64);
 
         Ok(mint_args.token_id)
     }
 
-    // Transfer function
+    // Transfer tokens
     pub fn transfer(&mut self, transfers: Vec<TransferArgs>) -> Vec<Option<TransferResult>> {
         let mut results = Vec::new();
 
         for transfer in transfers.into_iter() {
-            for token_id in &transfer.token_ids {
-                if let Some(sender_tokens) = self.balances.get_mut(&transfer.from) {
-                    if sender_tokens.contains(token_id) {
-                        sender_tokens.retain(|id| id != token_id);
+            let mut all_transfers_successful = true;
+            let mut tokens_to_transfer = Vec::new();
 
-                        let recipient_tokens = self
-                            .balances
-                            .entry(transfer.to.clone())
-                            .or_insert_with(Vec::new);
-                        recipient_tokens.push(token_id.clone());
-
-                        results.push(Some(TransferResult::Ok(Nat::from(1u64))));
-                    } else {
-                        results.push(Some(TransferResult::Err(TransferError::Unauthorized {
-                            token_ids: vec![token_id.clone()],
-                        })));
-                    }
-                } else {
-                    results.push(Some(TransferResult::Err(TransferError::Unauthorized {
-                        token_ids: vec![token_id.clone()],
-                    })));
-                }
-            }
-
-            if transfer.is_atomic.unwrap_or(true)
-                && results
-                    .iter()
-                    .any(|res| matches!(res, Some(TransferResult::Err(_))))
-            {
+            if let Some(sender_tokens) = self.balances.get_mut(&transfer.from) {
                 for token_id in &transfer.token_ids {
-                    if let Some(recipient_tokens) = self.balances.get_mut(&transfer.to) {
-                        recipient_tokens.retain(|id| id != token_id);
+                    if sender_tokens.contains(token_id) {
+                        tokens_to_transfer.push(token_id.clone());
+                    } else {
+                        results.push(Some(TransferResult::Err(
+                            TransferError::InsufficientBalance {
+                                token_id: token_id.clone(),
+                            },
+                        )));
+                        all_transfers_successful = false;
                     }
                 }
 
-                return vec![Some(TransferResult::Err(TransferError::GenericError {
-                    error_code: Nat::from(1u64),
-                    message: "Atomic transfer failed".to_string(),
-                }))];
+                if all_transfers_successful {
+                    for token_id in &tokens_to_transfer {
+                        sender_tokens.retain(|id| id != token_id);
+                    }
+
+                    let recipient_tokens = self
+                        .balances
+                        .entry(transfer.to.clone())
+                        .or_insert_with(Vec::new);
+                    recipient_tokens.extend(tokens_to_transfer.clone());
+
+                    results.push(Some(TransferResult::Ok(Nat::from(
+                        tokens_to_transfer.len(),
+                    ))));
+                }
+            } else {
+                results.push(Some(TransferResult::Err(TransferError::Unauthorized {
+                    token_ids: transfer.token_ids.clone(),
+                })));
             }
         }
 
         results
     }
 
-    // Burn function
+    // Burn tokens
     pub fn burn(&mut self, token_id: TokenId) -> Result<Nat, TransferError> {
-        if let Some(account) = self.balances.iter_mut().find_map(|(account, tokens)| {
-            if tokens.contains(&token_id) {
-                Some(account.clone())
-            } else {
-                None
-            }
-        }) {
-            self.balances
-                .get_mut(&account)
-                .unwrap()
-                .retain(|id| id != &token_id);
-
+        if let Some((_account, tokens)) = self
+            .balances
+            .iter_mut()
+            .find(|(_, tokens)| tokens.contains(&token_id))
+        {
+            tokens.retain(|id| id != &token_id);
             self.metadata.remove(&token_id);
-
             self.total_supply -= Nat::from(1u64);
-
             Ok(token_id)
         } else {
-            Err(TransferError::Unauthorized {
-                token_ids: vec![token_id],
+            Err(TransferError::TokenNotFound {
+                token_id: token_id.clone(),
             })
         }
     }
 }
 
-// ========== Query and Update Functions ==========
-
-// Initialize contract with dynamic values
-#[update]
-fn init_contract(
-    name: String,
-    symbol: String,
-    description: Option<String>,
-    image: Option<String>,
-    max_supply: Option<Nat>,
-    royalties: Option<u16>,
-    royalty_recipient: Option<Account>,
-    collection_metadata: Vec<MetadataEntry>,
-) {
-    CONTRACT.with(|contract| {
-        *contract.borrow_mut() = Some(NFTContract::new(
-            name,
-            symbol,
-            description,
-            image,
-            max_supply,
-            royalties,
-            royalty_recipient,
-            collection_metadata,
-        ));
-    });
-}
-
-// Collection-Level Methods (Queries)
-
-#[query]
-fn get_name() -> String {
-    CONTRACT.with(|contract| contract.borrow().as_ref().unwrap().name.clone())
-}
-
-#[query]
-fn get_symbol() -> String {
-    CONTRACT.with(|contract| contract.borrow().as_ref().unwrap().symbol.clone())
-}
-
-#[query]
-fn get_description() -> Option<String> {
-    CONTRACT.with(|contract| contract.borrow().as_ref().unwrap().description.clone())
-}
-
-#[query]
-fn get_image() -> Option<String> {
-    CONTRACT.with(|contract| contract.borrow().as_ref().unwrap().image.clone())
-}
-
-#[query]
-fn get_total_supply() -> Nat {
-    CONTRACT.with(|contract| contract.borrow().as_ref().unwrap().total_supply.clone())
-}
-
-#[query]
-fn get_supply_cap() -> Option<Nat> {
-    CONTRACT.with(|contract| contract.borrow().as_ref().unwrap().max_supply.clone())
-}
-
-#[query]
-fn get_collection_metadata() -> Vec<MetadataEntry> {
-    CONTRACT.with(|contract| {
-        contract
-            .borrow()
-            .as_ref()
-            .unwrap()
-            .collection_metadata
-            .clone()
-    })
-}
-
-#[query]
-fn get_royalties() -> Option<u16> {
-    CONTRACT.with(|contract| contract.borrow().as_ref().unwrap().royalties)
-}
-
-#[query]
-fn get_royalty_recipient() -> Option<Account> {
-    CONTRACT.with(|contract| {
-        contract
-            .borrow()
-            .as_ref()
-            .unwrap()
-            .royalty_recipient
-            .clone()
-    })
-}
-
-// Token-Level Methods (Queries)
-
-#[query]
-fn get_metadata(token_id: TokenId) -> Vec<MetadataEntry> {
-    CONTRACT.with(|contract| {
-        contract
-            .borrow()
-            .as_ref()
-            .unwrap()
-            .metadata
-            .get(&token_id)
-            .cloned()
-            .unwrap_or_default()
-    })
-}
-
-#[query]
-fn get_owner_of(token_id: TokenId) -> Account {
-    CONTRACT.with(|contract| {
-        contract
-            .borrow()
-            .as_ref()
-            .unwrap()
-            .balances
-            .iter()
-            .find(|(_, tokens)| tokens.contains(&token_id))
-            .map(|(account, _)| account.clone())
-            .expect("Token not found")
-    })
-}
-
-#[query]
-fn get_balance_of(account: Account) -> Nat {
-    CONTRACT.with(|contract| {
-        Nat::from(
-            contract
-                .borrow()
-                .as_ref()
-                .unwrap()
-                .balances
-                .get(&account)
-                .map_or(0, |tokens| tokens.len()),
-        )
-    })
-}
-
-#[query]
-fn get_tokens_of(account: Account) -> Vec<TokenId> {
-    CONTRACT.with(|contract| {
-        contract
-            .borrow()
-            .as_ref()
-            .unwrap()
-            .balances
-            .get(&account)
-            .cloned()
-            .unwrap_or_default()
-    })
-}
-
-#[query]
-fn get_supported_standards() -> Vec<(String, String)> {
-    vec![("ICRC7".to_string(), "1.0.0".to_string())]
-}
-
-// State-Modifying Methods (Updates)
+// Free functions for canister update operations
 
 #[update]
-fn mint(mint_args: MintArgs) -> Result<Nat, TransferError> {
+async fn mint_token(mint_args: MintArgs) -> Result<Nat, TransferError> {
     CONTRACT.with(|contract| contract.borrow_mut().as_mut().unwrap().mint(mint_args))
 }
 
 #[update]
-fn transfer(transfers: Vec<TransferArgs>) -> Vec<Option<TransferResult>> {
+async fn transfer_tokens(transfers: Vec<TransferArgs>) -> Vec<Option<TransferResult>> {
     CONTRACT.with(|contract| contract.borrow_mut().as_mut().unwrap().transfer(transfers))
 }
 
 #[update]
-fn burn(token_id: TokenId) -> Result<Nat, TransferError> {
+async fn burn_token(token_id: TokenId) -> Result<Nat, TransferError> {
     CONTRACT.with(|contract| contract.borrow_mut().as_mut().unwrap().burn(token_id))
+}
+
+// Initialize contract with dynamic values
+#[update]
+fn init_contract(name: String, symbol: String) {
+    CONTRACT.with(|contract| {
+        *contract.borrow_mut() = Some(NFTContract::new(name, symbol));
+    });
+}
+
+// Handle minting via message from external bridge
+#[update]
+pub async fn mint_from_message(msg: Message) -> Result<Nat, TransferError> {
+    let mint_args = MintArgs {
+        to: Account {
+            owner: Principal::from_text(msg.dest_address).unwrap(),
+            subaccount: None,
+        },
+        token_id: Nat::from(msg.token_id),
+        metadata: vec![MetadataEntry {
+            key: "source_chain".to_string(),
+            value: msg.src_chain_id.to_string(),
+        }],
+    };
+
+    CONTRACT.with(|contract| contract.borrow_mut().as_mut().unwrap().mint(mint_args))
 }

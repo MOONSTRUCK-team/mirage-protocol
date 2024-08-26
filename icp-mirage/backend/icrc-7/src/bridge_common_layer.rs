@@ -1,64 +1,59 @@
-use candid::{CandidType, Nat};
+use candid::CandidType;
+use ic_cdk::api::call::RejectionCode;
 use ic_cdk::api::management_canister::http_request::{
-    http_request, CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse, TransformArgs,
-    TransformContext,
+    http_request, CanisterHttpRequestArgument, HttpMethod,
 };
-use ic_cdk_macros::{query, update};
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 
-// Derive CandidType to ensure compatibility with canister calls
-#[derive(Serialize, Deserialize, CandidType)]
-struct ExternalNotification {
-    action: String,
-    account: String,
-    token_id: Nat,
+#[derive(Serialize, Deserialize, CandidType, Clone)]
+pub struct Message {
+    pub id: String,
+    pub nonce: u64,
+    pub op_type: u8,
+    pub src_chain_id: u64,
+    pub dest_chain_id: u64,
+    pub dest_address: String,
+    pub contract_address: String,
+    pub token_id: u64,
 }
 
-#[update]
-async fn notify_external_service(notification: ExternalNotification) -> String {
-    let url = "https://external-service.com/api/notify";
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub enum ExecuteError {
+    HttpError {
+        rejection_code: RejectionCode,
+        message: String,
+    },
+}
 
-    let request_headers = vec![
-        HttpHeader {
-            name: "Content-Type".to_string(),
-            value: "application/json".to_string(),
-        },
-        HttpHeader {
-            name: "User-Agent".to_string(),
-            value: "bridge_common_layer".to_string(),
-        },
-    ];
+// Function to notify external service about an event
+pub async fn notify_external_service(msg: Message) -> Result<(), ExecuteError> {
+    // Replace with the actual URL of the external service
+    let url = "https://your.external.service/notify";
+    let body = json!(msg).to_string();
 
-    let json_string = serde_json::to_string(&notification).unwrap();
-    let request_body: Option<Vec<u8>> = Some(json_string.into_bytes());
-
+    // Prepare the HTTP request
     let request = CanisterHttpRequestArgument {
         url: url.to_string(),
-        max_response_bytes: None,
         method: HttpMethod::POST,
-        headers: request_headers,
-        body: request_body,
-        transform: None,
+        body: Some(body.into_bytes()),
+        ..Default::default()
     };
 
-    let cycles = http_request_required_cycles(&request);
-
-    match http_request(request, cycles).await {
-        Ok((response,)) => {
-            let str_body = String::from_utf8(response.body).expect("Response not UTF-8.");
-            str_body
+    // Send the HTTP request and handle the response
+    match http_request(request, 0).await {
+        Ok(_) => {
+            // Log success (optional)
+            ic_cdk::println!("Successfully notified external service");
+            Ok(())
         }
-        Err((r, m)) => format!("Request failed. RejectionCode: {r:?}, Error: {m}"),
+        Err((rejection_code, error_message)) => {
+            // Log the error (optional)
+            ic_cdk::println!("Failed to notify external service: {:?}", error_message);
+            Err(ExecuteError::HttpError {
+                rejection_code,
+                message: error_message.to_string(),
+            })
+        }
     }
-}
-
-// Function to calculate required cycles
-fn http_request_required_cycles(arg: &CanisterHttpRequestArgument) -> u128 {
-    let max_response_bytes = arg.max_response_bytes.unwrap_or(2 * 1024 * 1024u64) as u128;
-    let arg_raw = candid::utils::encode_args((arg,)).expect("Failed to encode arguments.");
-    (3_000_000u128
-        + 60_000u128 * 13
-        + (arg_raw.len() as u128 + "http_request".len() as u128) * 400
-        + max_response_bytes * 800)
-        * 13
 }

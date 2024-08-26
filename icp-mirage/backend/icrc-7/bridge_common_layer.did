@@ -1,0 +1,6 @@
+service : {
+  set_external_service_url: (text) -> ();
+  get_external_service_url: () -> (text) query;
+  notify_external_service: (record { id: text; nonce: nat64; op_type: nat8; src_chain_id: nat64; dest_chain_id: nat64; dest_address: text; contract_address: text; token_id: nat64 }) -> (variant { Ok: text; Err: variant { MethodNotImplemented: null; NetworkError: text } });
+  execute_message: (record { id: text; nonce: nat64; op_type: nat8; src_chain_id: nat64; dest_chain_id: nat64; dest_address: text; contract_address: text; token_id: nat64 }) -> (variant { Ok: null; Err: variant { MethodNotImplemented: null } });
+}

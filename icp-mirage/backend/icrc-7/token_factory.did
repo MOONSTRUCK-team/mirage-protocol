@@ -1,0 +1,5 @@
+service : {
+  create_nft_collection: (text, text) -> (principal) query;
+  get_collections: () -> (vec record { name: text; symbol: text; contract_address: principal }) query;
+  init_authorized_creators: (vec principal) -> ();
+}

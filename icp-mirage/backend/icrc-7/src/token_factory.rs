@@ -1,20 +1,13 @@
-use crate::icrc7::{with_contract, Account, MetadataEntry, NFTContract};
-use candid::{CandidType, Nat, Principal};
+use crate::bridge_common_layer::{notify_external_service, Message};
+pub use crate::icrc7::{Account, MintArgs, NFTContract};
+use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-
-// ========== Token Factory Contract ==========
 
 #[derive(Clone, Debug, Serialize, Deserialize, CandidType)]
 pub struct NFTCollection {
     pub name: String,
     pub symbol: String,
-    pub description: Option<String>,
-    pub image: Option<String>,
-    pub max_supply: Option<Nat>,
-    pub royalties: Option<u16>,
-    pub royalty_recipient: Option<Account>,
-    pub collection_metadata: Vec<MetadataEntry>,
     pub contract_address: Principal,
 }
 
@@ -29,93 +22,82 @@ impl NFTFactory {
         }
     }
 
-    // Function to create a new NFT contract instance
+    // Create a new NFT contract instance and notify external service
     pub fn create_nft_contract(
         &mut self,
         name: String,
         symbol: String,
-        description: Option<String>,
-        image: Option<String>,
-        max_supply: Option<Nat>,
-        royalties: Option<u16>,
-        royalty_recipient: Option<Account>,
-        collection_metadata: Vec<MetadataEntry>,
-    ) -> Principal {
+        id: String,         // Message ID, passed as a parameter
+        nonce: u64,         // Nonce value, passed as a parameter or generated
+        src_chain_id: u64,  // Source chain ID, passed as a parameter
+        dest_chain_id: u64, // Destination chain ID, passed as a parameter
+        token_id: u64,      // Token ID, passed as a parameter
+    ) -> (Principal, Message) {
         let contract_address = ic_cdk::api::id();
 
-        let new_collection = NFTCollection {
+        self.collections.push(NFTCollection {
             name: name.clone(),
             symbol: symbol.clone(),
-            description: description.clone(),
-            image: image.clone(),
-            max_supply: max_supply.clone(),
-            royalties: royalties.clone(),
-            royalty_recipient: royalty_recipient.clone(),
-            collection_metadata: collection_metadata.clone(),
             contract_address,
-        };
-
-        self.collections.push(new_collection);
-
-        // Initialize the NFT contract state using the accessor function from icrc7
-        with_contract(|contract| {
-            *contract = Some(NFTContract::new(
-                name,
-                symbol,
-                description,
-                image,
-                max_supply,
-                royalties,
-                royalty_recipient,
-                collection_metadata,
-            ));
         });
 
-        contract_address
+        // Dynamically construct the message
+        let msg = Message {
+            id,
+            nonce,
+            op_type: 1, // `1` represents a mint operation
+            src_chain_id,
+            dest_chain_id,
+            dest_address: contract_address.to_string(),
+            contract_address: contract_address.to_string(),
+            token_id,
+        };
+
+        (contract_address, msg)
     }
 
-    // Retrieve the list of deployed NFT collections
     pub fn get_collections(&self) -> Vec<NFTCollection> {
         self.collections.clone()
     }
 }
 
-// ========== Global State ==========
-
 thread_local! {
     pub static FACTORY: RefCell<NFTFactory> = RefCell::new(NFTFactory::new());
 }
 
-// ========== Update Functions ==========
-
+// Async update function to create a new NFT collection
 #[ic_cdk_macros::update]
-pub fn create_nft_collection(
+pub async fn create_nft_collection(
     name: String,
     symbol: String,
-    description: Option<String>,
-    image: Option<String>,
-    max_supply: Option<Nat>,
-    royalties: Option<u16>,
-    royalty_recipient: Option<Account>,
-    collection_metadata: Vec<MetadataEntry>,
-) -> Principal {
-    FACTORY.with(|factory| {
+    id: String,         // Message ID
+    nonce: u64,         // Nonce value
+    src_chain_id: u64,  // Source chain ID
+    dest_chain_id: u64, // Destination chain ID
+    token_id: u64,      // Token ID
+) -> Result<Principal, String> {
+    // Create the contract and message inside the factory closure
+    let (principal, msg) = FACTORY.with(|factory| {
         factory.borrow_mut().create_nft_contract(
             name,
             symbol,
-            description,
-            image,
-            max_supply,
-            royalties,
-            royalty_recipient,
-            collection_metadata,
+            id,
+            nonce,
+            src_chain_id,
+            dest_chain_id,
+            token_id,
         )
-    })
+    });
+
+    // Notify the external service asynchronously outside of the closure
+    match notify_external_service(msg).await {
+        Ok(_) => Ok(principal),
+        Err(err) => Err(format!("Failed to notify external service: {:?}", err)),
+    }
 }
 
-// ========== Query Functions ==========
-
+// Query function to get the collections
 #[ic_cdk_macros::query]
-pub fn get_nft_collections() -> Vec<NFTCollection> {
+pub fn get_all_collections() -> Vec<NFTCollection> {
     FACTORY.with(|factory| factory.borrow().get_collections())
 }
