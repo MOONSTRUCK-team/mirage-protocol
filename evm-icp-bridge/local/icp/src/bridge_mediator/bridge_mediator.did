@@ -7,8 +7,19 @@ type Message = record{
     dest_address: text;
     contract_address: text;
     token_id: nat64;
-}
+};
+
+type ExecuteError = variant {
+    MessageNotExecuted: text;
+};
+
+type ExecuteResult = variant {
+    Ok: null;
+    Err: ExecuteError;
+};
+
 
 service : {
     "execute_message": (Message) -> ();
+    "send_message": () -> (ExecuteResult);
 }

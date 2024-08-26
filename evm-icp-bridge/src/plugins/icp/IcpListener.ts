@@ -33,6 +33,7 @@ export class IcpListenerImpl implements Listener {
 
         const message =  await req.json();
         try {
+            // TODO Make a matching types for EVM and ICP messages (uint256 cannot be represented on ICP)
             const parsedMessage: Message = {
                 id: String(message.id),
                 opType: BigInt(message.opType),

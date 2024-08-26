@@ -9,6 +9,11 @@ export const idlFactory = ({ IDL }) => {
     'contract_address' : IDL.Text,
     'op_type' : IDL.Nat8,
   });
-  return IDL.Service({ 'execute_message' : IDL.Func([Message], [], []) });
+  const ExecuteError = IDL.Variant({ 'MessageNotExecuted' : IDL.Text });
+  const ExecuteResult = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : ExecuteError });
+  return IDL.Service({
+    'execute_message' : IDL.Func([Message], [], []),
+    'send_message' : IDL.Func([], [ExecuteResult], []),
+  });
 };
 export const init = ({ IDL }) => { return []; };

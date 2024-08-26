@@ -1,9 +1,9 @@
 import type { Executor, Message } from '../../core/Types';
 import { type ActorSubclass, HttpAgent } from "@dfinity/agent";
 import { Secp256k1KeyIdentity } from "@dfinity/identity-secp256k1";
-import { createActor } from '../../artifacts/icp/bridge_mediator';
+import { createActor } from '../../artifacts/icp';
 import { fromHexString as hexStingToArrayBuffer } from '@dfinity/candid';
-import type { _SERVICE as BridgeMediator_Service, Message as BridgeMediator_Message } from '../../artifacts/icp/bridge_mediator/bridge_mediator.did';
+import type { _SERVICE as BridgeMediator_Service, Message as BridgeMediator_Message } from '../../artifacts/icp/bridge_mediator.did';
 
 export class IcpExecutorImpl implements Executor {
     private agent: HttpAgent | undefined;
