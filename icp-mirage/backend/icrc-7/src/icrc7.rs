@@ -38,6 +38,7 @@ pub enum TransferResult {
 #[derive(Clone, Debug, Serialize, Deserialize, CandidType, PartialEq)]
 pub enum TransferError {
     Unauthorized { token_ids: Vec<TokenId> },
+    TokenAlreadyExists { token_id: TokenId },
     TokenNotFound { token_id: TokenId },
     InsufficientBalance { token_id: TokenId },
     InvalidMetadata { token_id: TokenId },
@@ -80,7 +81,7 @@ impl NFTContract {
     pub fn mint(&mut self, mint_args: MintArgs) -> Result<Nat, TransferError> {
         // Check if token already exists
         if self.metadata.contains_key(&mint_args.token_id) {
-            return Err(TransferError::TokenNotFound {
+            return Err(TransferError::TokenAlreadyExists {
                 token_id: mint_args.token_id.clone(),
             });
         }

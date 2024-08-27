@@ -338,6 +338,7 @@ dependencies = [
  "ic-cdk-macros",
  "ic-cdk-timers",
  "ic-stable-structures",
+ "num-traits",
  "serde",
  "serde_json",
 ]

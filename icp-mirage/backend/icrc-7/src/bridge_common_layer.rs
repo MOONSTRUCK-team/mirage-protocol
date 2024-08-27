@@ -1,7 +1,7 @@
 use candid::CandidType;
 use ic_cdk::api::call::RejectionCode;
 use ic_cdk::api::management_canister::http_request::{
-    http_request, CanisterHttpRequestArgument, HttpMethod,
+    http_request, CanisterHttpRequestArgument, HttpHeader, HttpMethod,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -32,11 +32,19 @@ pub async fn notify_external_service(msg: Message) -> Result<(), ExecuteError> {
     let url = "https://your.external.service/notify";
     let body = json!(msg).to_string();
 
+    // Prepare HTTP headers
+    let headers = vec![HttpHeader {
+        name: "Content-Type".to_string(),
+        value: "application/json".to_string(),
+    }];
+
     // Prepare the HTTP request
     let request = CanisterHttpRequestArgument {
         url: url.to_string(),
         method: HttpMethod::POST,
         body: Some(body.into_bytes()),
+        headers,
+        max_response_bytes: Some(1024 * 1024), // Example max response size
         ..Default::default()
     };
 
