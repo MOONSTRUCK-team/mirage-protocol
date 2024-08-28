@@ -1,6 +1,5 @@
-use crate::bridge_common_layer::Message;
 use candid::{CandidType, Nat, Principal};
-use ic_cdk_macros::update;
+use ic_cdk_macros::{query, update};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -175,45 +174,130 @@ impl NFTContract {
     }
 }
 
+// Initialize contract with dynamic values
+#[update]
+fn init_contract(name: String, symbol: String) -> Result<(), String> {
+    CONTRACT.with(|contract| {
+        if contract.borrow().is_some() {
+            return Err("Contract already initialized".to_string());
+        }
+        *contract.borrow_mut() = Some(NFTContract::new(name, symbol));
+        Ok(())
+    })
+}
+
 // Free functions for canister update operations
 
 #[update]
 async fn mint_token(mint_args: MintArgs) -> Result<Nat, TransferError> {
-    CONTRACT.with(|contract| contract.borrow_mut().as_mut().unwrap().mint(mint_args))
+    CONTRACT.with(|contract| {
+        let mut contract_ref = contract.borrow_mut();
+        if let Some(ref mut nft_contract) = *contract_ref {
+            nft_contract.mint(mint_args)
+        } else {
+            Err(TransferError::Unauthorized {
+                token_ids: vec![mint_args.token_id.clone()],
+            })
+        }
+    })
 }
 
 #[update]
 async fn transfer_tokens(transfers: Vec<TransferArgs>) -> Vec<Option<TransferResult>> {
-    CONTRACT.with(|contract| contract.borrow_mut().as_mut().unwrap().transfer(transfers))
+    CONTRACT.with(|contract| {
+        let mut contract_ref = contract.borrow_mut();
+        if let Some(ref mut nft_contract) = *contract_ref {
+            nft_contract.transfer(transfers)
+        } else {
+            transfers
+                .into_iter()
+                .map(|transfer| {
+                    Some(TransferResult::Err(TransferError::Unauthorized {
+                        token_ids: transfer.token_ids.clone(),
+                    }))
+                })
+                .collect()
+        }
+    })
 }
 
 #[update]
 async fn burn_token(token_id: TokenId) -> Result<Nat, TransferError> {
-    CONTRACT.with(|contract| contract.borrow_mut().as_mut().unwrap().burn(token_id))
-}
-
-// Initialize contract with dynamic values
-#[update]
-fn init_contract(name: String, symbol: String) {
     CONTRACT.with(|contract| {
-        *contract.borrow_mut() = Some(NFTContract::new(name, symbol));
-    });
+        let mut contract_ref = contract.borrow_mut();
+        if let Some(ref mut nft_contract) = *contract_ref {
+            nft_contract.burn(token_id)
+        } else {
+            Err(TransferError::TokenNotFound {
+                token_id: token_id.clone(),
+            })
+        }
+    })
 }
 
-// Handle minting via message from external bridge
-#[update]
-pub async fn mint_from_message(msg: Message) -> Result<Nat, TransferError> {
-    let mint_args = MintArgs {
-        to: Account {
-            owner: Principal::from_text(msg.dest_address).unwrap(),
-            subaccount: None,
-        },
-        token_id: Nat::from(msg.token_id),
-        metadata: vec![MetadataEntry {
-            key: "source_chain".to_string(),
-            value: msg.src_chain_id.to_string(),
-        }],
-    };
+// Query functions
 
-    CONTRACT.with(|contract| contract.borrow_mut().as_mut().unwrap().mint(mint_args))
+// Get token metadata by token ID
+#[query]
+fn get_token_metadata(token_id: TokenId) -> Option<Vec<MetadataEntry>> {
+    CONTRACT.with(|contract| {
+        contract
+            .borrow()
+            .as_ref()
+            .and_then(|nft_contract| nft_contract.metadata.get(&token_id).cloned())
+    })
+}
+
+// Get balance of an account
+#[query]
+fn get_balance(account: Account) -> Vec<TokenId> {
+    CONTRACT.with(|contract| {
+        contract.borrow().as_ref().map_or(vec![], |nft_contract| {
+            nft_contract
+                .balances
+                .get(&account)
+                .cloned()
+                .unwrap_or_default()
+        })
+    })
+}
+
+// Get total supply of tokens
+#[query]
+fn get_total_supply() -> Nat {
+    CONTRACT.with(|contract| {
+        contract
+            .borrow()
+            .as_ref()
+            .map_or(Nat::from(0u64), |nft_contract| {
+                nft_contract.total_supply.clone()
+            })
+    })
+}
+
+// Check if an account owns a specific token
+#[query]
+fn is_owner(account: Account, token_id: TokenId) -> bool {
+    CONTRACT.with(|contract| {
+        contract.borrow().as_ref().map_or(false, |nft_contract| {
+            nft_contract
+                .balances
+                .get(&account)
+                .map_or(false, |tokens| tokens.contains(&token_id))
+        })
+    })
+}
+
+// Get all token IDs owned by an account
+#[query]
+fn get_tokens_of(account: Account) -> Vec<TokenId> {
+    CONTRACT.with(|contract| {
+        contract.borrow().as_ref().map_or(vec![], |nft_contract| {
+            nft_contract
+                .balances
+                .get(&account)
+                .cloned()
+                .unwrap_or_default()
+        })
+    })
 }
