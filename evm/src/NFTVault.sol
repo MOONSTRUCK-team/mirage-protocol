@@ -14,8 +14,8 @@ contract NFTVault is INFTVault {
     mapping(address owner => mapping(address collection => mapping(uint256 tokenId => VaultRecord record))) public
         records;
 
-    function deposit(IERC721 collection, uint256 tokenId) external {
-        VaultRecord storage record = records[msg.sender][address(collection)][tokenId];
+    function deposit(IERC721 collection, uint256 tokenId, address owner) external {
+        VaultRecord storage record = records[owner][address(collection)][tokenId];
 
         // Checks
         if (record.isActive) {
@@ -24,15 +24,15 @@ contract NFTVault is INFTVault {
 
         // Effects
         record.isActive = true;
-        emit TokenDeposited(address(collection), tokenId, msg.sender);
+        emit TokenDeposited(address(collection), tokenId, owner);
 
         // Interactions
-        collection.transferFrom(msg.sender, address(this), tokenId);
+        collection.transferFrom(owner, address(this), tokenId);
         assert(collection.ownerOf(tokenId) == address(this));
     }
 
-    function release(IERC721 collection, uint256 tokenId) external {
-        VaultRecord storage record = records[msg.sender][address(collection)][tokenId];
+    function release(IERC721 collection, uint256 tokenId, address owner) external {
+        VaultRecord storage record = records[owner][address(collection)][tokenId];
 
         // Checks
         if (!record.isActive) {
@@ -41,10 +41,10 @@ contract NFTVault is INFTVault {
 
         // Effects
         record.isActive = false;
-        emit TokenReleased(address(collection), tokenId, msg.sender);
+        emit TokenReleased(address(collection), tokenId, owner);
 
         // Interactions
-        collection.transferFrom(address(this), msg.sender, tokenId);
-        assert(collection.ownerOf(tokenId) == address(msg.sender));
+        collection.transferFrom(address(this), owner, tokenId);
+        assert(collection.ownerOf(tokenId) == address(owner));
     }
 }

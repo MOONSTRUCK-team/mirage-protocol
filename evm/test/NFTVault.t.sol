@@ -23,14 +23,14 @@ contract NFTVaultTest is Test {
         collection.approve(address(nftVault), 1);
         vm.expectEmit(address(nftVault));
         emit TokenDeposited(address(collection), 1, address(this));
-        nftVault.deposit(collection, 1);
+        nftVault.deposit(collection, 1, address(this));
         assertEq(collection.ownerOf(1), address(nftVault));
 
         // Assert
         vm.expectRevert(abi.encodeWithSelector(TokenAlreadyDeposited.selector, address(collection), 1));
 
         // Act
-        nftVault.deposit(collection, 1);
+        nftVault.deposit(collection, 1, address(this));
     }
 
     function test_deposit_SuccessfulDeposit() external {
@@ -41,7 +41,7 @@ contract NFTVaultTest is Test {
         emit TokenDeposited(address(collection), 1, address(this));
 
         // Act
-        nftVault.deposit(collection, 1);
+        nftVault.deposit(collection, 1, address(this));
 
         // Assert
         assertEq(collection.ownerOf(1), address(nftVault));
@@ -54,7 +54,7 @@ contract NFTVaultTest is Test {
         vm.expectRevert(abi.encodeWithSelector(TokenNotDeposited.selector, address(collection), 1));
 
         // Act
-        nftVault.release(collection, 1);
+        nftVault.release(collection, 1, address(this));
     }
 
     function test_release_SuccessfulRelease() external {
@@ -62,14 +62,14 @@ contract NFTVaultTest is Test {
         collection.approve(address(nftVault), 1);
         vm.expectEmit(address(nftVault));
         emit TokenDeposited(address(collection), 1, address(this));
-        nftVault.deposit(collection, 1);
+        nftVault.deposit(collection, 1, address(this));
         assertEq(collection.ownerOf(1), address(nftVault));
 
         vm.expectEmit(address(nftVault));
         emit TokenReleased(address(collection), 1, address(this));
 
         // Act
-        nftVault.release(collection, 1);
+        nftVault.release(collection, 1, address(this));
 
         // Assert
         assertEq(collection.ownerOf(1), address(this));
