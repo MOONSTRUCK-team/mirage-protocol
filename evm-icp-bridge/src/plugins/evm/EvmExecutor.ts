@@ -1,7 +1,7 @@
-import type { Executor, Message } from '../../core/Types';
+import type { Executor, ExtendedMessage } from '../../core/Types';
 import { JsonRpcProvider, Wallet } from 'ethers';
-import { EvmBridgeMediator__factory } from '../../../types/ethers-contracts/factories/EvmBridgeMediator__factory';
-import type { BridgeMediator } from '../../../types/ethers-contracts/EvmBridgeMediator';
+import { BridgeMediator__factory } from '../../../types/ethers-contracts/factories/BridgeMediator__factory';
+import type { BridgeMediator } from '../../../types/ethers-contracts/BridgeMediator';
 
 export class EvmExecutorImpl implements Executor {
     private rpcUrl: string;
@@ -14,16 +14,16 @@ export class EvmExecutorImpl implements Executor {
         this.wallet = new Wallet(signerKey);
     }
 
-    async execute(message: Message): Promise<void> {
+    async execute(message: ExtendedMessage): Promise<void> {
         const provider = new JsonRpcProvider(this.rpcUrl, undefined, { staticNetwork: true });
-        const bridgeMediator = EvmBridgeMediator__factory.connect(this.contract.toString(), provider);
+        const bridgeMediator = BridgeMediator__factory.connect(this.contract.toString(), provider);
 
         const packedMessage = this.packMessage(message);
         await bridgeMediator.connect(this.wallet).executeMessage(packedMessage);
         console.log('Message send to the EVM:', packedMessage.id);
     }
 
-    packMessage(message: Message): BridgeMediator.MessageStruct {
+    packMessage(message: ExtendedMessage): BridgeMediator.MessageStruct {
         return {
             id: message.id,
             nonce: message.nonce.toString(),

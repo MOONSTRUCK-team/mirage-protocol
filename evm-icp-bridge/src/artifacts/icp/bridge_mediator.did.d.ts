@@ -14,6 +14,7 @@ export interface Message {
   'nonce' : bigint,
   'contract_address' : string,
   'op_type' : number,
+  'token_metadata' : string,
 }
 export interface _SERVICE {
   'execute_message' : ActorMethod<[Message], undefined>,

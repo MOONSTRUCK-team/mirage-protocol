@@ -13,6 +13,7 @@ struct Message {
     dest_address: String, // Destination address
     contract_address: String, // Contract address
     token_id: u64, // Token id
+    token_metadata: String, // Token metadata
 }
 
 #[derive(CandidType, Debug)]

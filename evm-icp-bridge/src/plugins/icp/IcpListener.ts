@@ -1,16 +1,16 @@
-import type { Message, Listener } from '../../core/Types';
+import type { Message, Listener, MessageCallback } from '../../core/Types';
 import { serve } from 'bun';
 
 export class IcpListenerImpl implements Listener {
     private port: number;
-    private onMessageReceivedCb: ((message: Message) => void) | undefined;
+    private onMessageReceived: MessageCallback | undefined;
 
     constructor(port: number) {
         this.port = port;
     }
 
-    setup(onMessageReceivedCb: (message: Message) => void): void {
-        this.onMessageReceivedCb = onMessageReceivedCb;
+    setup(onMessageReceived: MessageCallback): void {
+        this.onMessageReceived = onMessageReceived;
         const server = serve({
             port: this.port,
             fetch: async (req: Request): Promise<Response> => {
@@ -26,7 +26,7 @@ export class IcpListenerImpl implements Listener {
     }
 
     async handleMessageReceived(req: Request): Promise<Response> {
-        if (!this.onMessageReceivedCb) {
+        if (!this.onMessageReceived) {
             console.error('Callback function not set');
             return new Response('server_side_error', { status: 400 });
         }
@@ -45,11 +45,11 @@ export class IcpListenerImpl implements Listener {
                 tokenId: BigInt(message.tokenId),
             };
 
-            this.onMessageReceivedCb(parsedMessage);
+            this.onMessageReceived(parsedMessage);
             return new Response('success', { status: 200 });
         } catch (e) {
             console.error(e);
             return new Response('server_side_error', { status: 400 });
-        }   
+        }
     }
 }

@@ -4,9 +4,9 @@
 
 import { Contract, Interface, type ContractRunner } from "ethers";
 import type {
-  EvmBridgeMediator,
-  EvmBridgeMediatorInterface,
-} from "../EvmBridgeMediator";
+  BridgeMediator,
+  BridgeMediatorInterface,
+} from "../BridgeMediator";
 
 const _abi = [
   {
@@ -208,15 +208,15 @@ const _abi = [
   },
 ] as const;
 
-export class EvmBridgeMediator__factory {
+export class BridgeMediator__factory {
   static readonly abi = _abi;
-  static createInterface(): EvmBridgeMediatorInterface {
-    return new Interface(_abi) as EvmBridgeMediatorInterface;
+  static createInterface(): BridgeMediatorInterface {
+    return new Interface(_abi) as BridgeMediatorInterface;
   }
   static connect(
     address: string,
     runner?: ContractRunner | null
-  ): EvmBridgeMediator {
-    return new Contract(address, _abi, runner) as unknown as EvmBridgeMediator;
+  ): BridgeMediator {
+    return new Contract(address, _abi, runner) as unknown as BridgeMediator;
   }
 }

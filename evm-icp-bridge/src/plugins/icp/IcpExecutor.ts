@@ -1,4 +1,4 @@
-import type { Executor, Message } from '../../core/Types';
+import type { Executor, ExtendedMessage } from '../../core/Types';
 import { type ActorSubclass, HttpAgent } from "@dfinity/agent";
 import { Secp256k1KeyIdentity } from "@dfinity/identity-secp256k1";
 import { createActor } from '../../artifacts/icp';
@@ -27,7 +27,7 @@ export class IcpExecutorImpl implements Executor {
         console.log('ICP Executor ready');
     }
 
-    async execute(message: Message): Promise<void> {
+    async execute(message: ExtendedMessage): Promise<void> {
         if (!this.isInitialized()) {
             throw new Error('ICP Executor is not fully initialized');
         }
@@ -41,6 +41,7 @@ export class IcpExecutorImpl implements Executor {
             dest_address: message.destAddress,
             contract_address: message.contract.toString(),
             token_id: BigInt(message.tokenId),
+            token_metadata: message.metadata ?? '',
         }
         try {
             await this.actor?.execute_message(packedMessage);

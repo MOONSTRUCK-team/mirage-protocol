@@ -1,34 +1,40 @@
 import { JsonRpcProvider, type AddressLike, type BytesLike } from 'ethers';
-import { type Message, type Listener} from '../../core/Types';
+import type { Message, Listener, MessageCallback } from '../../core/Types';
+import { EvmMetadataReaderImpl } from './utils/EvmMetadataReader';
 import { getChainId } from '../../core/Utils';
 
-import { EvmBridgeMediator__factory } from '../../../types/ethers-contracts/factories/EvmBridgeMediator__factory';
-import type { BridgeMediator } from '../../../types/ethers-contracts/EvmBridgeMediator';
+import { BridgeMediator__factory } from '../../../types/ethers-contracts/factories/BridgeMediator__factory';
+import type { BridgeMediator } from '../../../types/ethers-contracts/BridgeMediator';
 
 export class EvmListenerImpl implements Listener {
     private rpcUrl: string;
     private contract: AddressLike;
+    private metadataReader: EvmMetadataReaderImpl;
 
     constructor(rpcUrl: string, contract: AddressLike) {
         this.rpcUrl = rpcUrl;
         this.contract = contract;
+        this.metadataReader = new EvmMetadataReaderImpl(rpcUrl);
     }
 
-    setup(onMessageReceivedCb: (message: Message) => void): void {
+    async setup(onMessageReceived: MessageCallback): Promise<void> {
         const provider = new JsonRpcProvider(this.rpcUrl, undefined, { staticNetwork: true });
-        const bridgeMediator = EvmBridgeMediator__factory.connect(this.contract.toString(), provider);
+        const bridgeMediator = BridgeMediator__factory.connect(this.contract.toString(), provider);
        
-        bridgeMediator.on(bridgeMediator.filters.MessageSend, (id: BytesLike, messageData: BridgeMediator.MessageStruct) => {      
+        bridgeMediator.on(bridgeMediator.filters.MessageSend, async (id: BytesLike, messageData: BridgeMediator.MessageStruct) => {      
             console.info('Message received from the EVM', id);
             try {
+                const metadata = await this.metadataReader.readMetadata(
+                    messageData.contractAddress,
+                    Number(messageData.tokenId
+                ));
                 const msg = this.parseMessage(id, messageData);
-                onMessageReceivedCb(msg);
+                onMessageReceived(msg, metadata);
             }
             catch (e) {
                 console.error(e);
             }
         });
-
         console.log('EvmListner is listening on', this.rpcUrl);
     }
 

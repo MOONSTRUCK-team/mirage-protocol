@@ -1,4 +1,4 @@
-import type { Plugin, Listener, Executor, Router, Message } from '../../core/Types';
+import type { Plugin, Listener, Executor, Router, ExtendedMessage } from '../../core/Types';
 import { ChainId } from '../../core/Types';
 
 export class PluginImpl implements Plugin { 
@@ -17,7 +17,7 @@ export class PluginImpl implements Plugin {
         this.listener.setup(this.onMessageReceived);
     }
 
-    onMessageReceived = (message: Message): void => {
+    onMessageReceived(message: ExtendedMessage): void {
         this.router.routeMessage(message);
     }
 }

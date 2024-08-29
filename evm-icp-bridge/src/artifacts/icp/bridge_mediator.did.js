@@ -8,6 +8,7 @@ export const idlFactory = ({ IDL }) => {
     'nonce' : IDL.Nat64,
     'contract_address' : IDL.Text,
     'op_type' : IDL.Nat8,
+    'token_metadata' : IDL.Text,
   });
   const ExecuteError = IDL.Variant({ 'MessageNotExecuted' : IDL.Text });
   const ExecuteResult = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : ExecuteError });

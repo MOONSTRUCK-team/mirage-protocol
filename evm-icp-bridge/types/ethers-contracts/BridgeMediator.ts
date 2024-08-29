@@ -56,7 +56,7 @@ export declare namespace BridgeMediator {
   };
 }
 
-export interface EvmBridgeMediatorInterface extends Interface {
+export interface BridgeMediatorInterface extends Interface {
   getFunction(
     nameOrSignature: "executeMessage" | "getNonce" | "sendMessage"
   ): FunctionFragment;
@@ -124,11 +124,11 @@ export namespace MessageSendEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export interface EvmBridgeMediator extends BaseContract {
-  connect(runner?: ContractRunner | null): EvmBridgeMediator;
+export interface BridgeMediator extends BaseContract {
+  connect(runner?: ContractRunner | null): BridgeMediator;
   waitForDeployment(): Promise<this>;
 
-  interface: EvmBridgeMediatorInterface;
+  interface: BridgeMediatorInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
