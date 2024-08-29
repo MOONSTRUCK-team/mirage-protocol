@@ -30,3 +30,12 @@ docker run --env-file ./.env -it evm-icp-bridge
 ```
 
 The `--env-file` flag is used to pass the environment variables to the docker container.
+
+
+### Connecting all the pieces
+
+In order to properly test the bridge, both the EVM and ICP nodes need to be running, as well as the service itself. To do this, you can run the following commands:
+
+```bash
+docker compose up --build
+```

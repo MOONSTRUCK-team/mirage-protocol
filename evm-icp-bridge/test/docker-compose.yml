@@ -1,5 +1,0 @@
-# TODO
-# Docker compose file for setting up the test environment
-# On one side local EVM node is running and on the other side ICP node is running
-# Run and configure the bridge service
-# Execute the methods on the EVM node and check the results on the ICP node

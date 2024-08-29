@@ -1,0 +1,42 @@
+# TODO
+# Docker compose file for setting up the test environment
+# On one side local EVM node is running and on the other side ICP node is running
+# Run and configure the bridge service
+# Execute the methods on the EVM node and check the results on the ICP node
+
+version: '3.8'
+
+services:
+  evm-node:
+    build: ./local/evm
+    container_name: evm-contract
+    networks:
+      - bridge-network
+    ports:
+      - "8545:8545" # Expose EVM node port
+
+  # icp-node:
+  # #   build: ./local/icp
+  #   container_name: icp-canister
+  #   networks:
+  #     - bridge-network
+  #   ports:
+  #     - "8000:8000" # Expose ICP node port
+
+  bridge-service:
+    build: .
+    container_name: bridge-service
+    networks:
+      - bridge-network
+    env_file:
+    # TODO Not enough, need to retrieve the canister id and executor secret key from the icp-node
+      - .env.example
+    depends_on:
+      - evm-node
+      # - icp-node
+    ports:
+      - "4942:4942" # Expose ICP listener port
+
+networks:
+  bridge-network:
+    driver: bridge

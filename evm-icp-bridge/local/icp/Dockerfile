@@ -37,3 +37,7 @@ RUN sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
 
 COPY . /canister
 WORKDIR /canister
+
+# Start the dfx network and deploy the canister
+RUN dfx start --background --clean
+RUN dfx deploy
