@@ -23,8 +23,8 @@ async fn send_http_post_request() -> String {
     // 2. SETUP ARGUMENTS FOR HTTP POST request
 
     // 2.1 Setup the URL
-    let host = "putsreq.com";
-    let url = "https://putsreq.com/aL1QS5IbaQd4NTqN3a81";
+    let host = "localhost"; // putsreq.com
+    let url = "https://localhost:3000/api/post"; // https://putsreq.com/aL1QS5IbaQd4NTqN3a81
 
     // 2.2 Prepare headers for the system http_request call
     // Note that `HttpHeader` is declared in line 4
@@ -126,8 +126,8 @@ async fn send_http_post_request() -> String {
 
             // Return the body as a string and end the method
             let result: String = format!(
-                "{}. See more info of the request sent at: {}/inspect",
-                str_body, url
+                "{}.",
+                str_body
             );
             result
         }
