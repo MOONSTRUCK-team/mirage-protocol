@@ -1,46 +1,55 @@
 type Nat = nat;
 type Principal = principal;
-type Account = record { owner: Principal; subaccount: opt blob };
-type TokenId = Nat;
 
-type MetadataEntry = record { key: text; value: text };
-type MintArgs = record { to: Account; token_id: TokenId; metadata: vec MetadataEntry };
+type TransferError = variant {
+  Unauthorized: record { token_ids: vec Nat };
+  TokenAlreadyExists: record { token_id: Nat };
+  TokenNotFound: record { token_id: Nat };
+  InsufficientBalance: record { token_id: Nat };
+  InvalidMetadata: record { token_id: Nat };
+};
 
-type TransferArgs = record { from: Account; to: Account; token_ids: vec TokenId };
-type TransferError = variant { Unauthorized: record { token_ids: vec TokenId };
-                               TokenAlreadyExists: record { token_id: TokenId };
-                               TokenNotFound: record { token_id: TokenId };
-                               InsufficientBalance: record { token_id: TokenId };
-                               InvalidMetadata: record { token_id: TokenId } };
+type TransferResult = variant {
+  Ok: Nat;
+  Err: TransferError;
+};
 
-type TransferResult = variant { Ok: Nat; Err: TransferError };
+type MetadataEntry = record {
+  key: text;
+  value: text;
+};
+
+type MintArgs = record {
+  to: record {
+    owner: Principal;
+    subaccount: opt blob;
+  };
+  token_id: Nat;
+  metadata: vec MetadataEntry;
+};
+
+type TransferArgs = record {
+  from: record {
+    owner: Principal;
+    subaccount: opt blob;
+  };
+  to: record {
+    owner: Principal;
+    subaccount: opt blob;
+  };
+  token_ids: vec Nat;
+};
 
 type NFTCollection = record {
-    name: text;
-    symbol: text;
-    contract_address: Principal;
+  name: text;
+  symbol: text;
+  contract_address: Principal;
 };
-
-type Message = record {
-    id: text;
-    nonce: nat64;
-    op_type: nat8;
-    src_chain_id: nat64;
-    dest_chain_id: nat64;
-    dest_address: text;
-    contract_address: text;
-    token_id: nat64;
-};
-
-type ExecuteError = variant { HttpError: record { rejection_code: nat32; message: text } };
-
-type Result_Principal_Text = variant { Ok: Principal; Err: text };
-type Result_Nat_Text = variant { Ok: Nat; Err: text };
 
 service : {
-    create_nft_collection: (text, text, text, nat64, nat64, nat64, nat64) -> (Result_Principal_Text);
-    mint_token_in_collection: (nat, MintArgs, text, nat64, nat64, nat64) -> (Result_Nat_Text);
-    transfer_tokens_in_collection: (nat, vec TransferArgs, text, nat64, nat64, nat64) -> (vec opt TransferResult);
-    burn_token_in_collection: (nat, TokenId, text, nat64, nat64, nat64) -> (Result_Nat_Text);
-    get_all_collections: () -> (vec NFTCollection) query;
+  create_nft_collection: (text, text) -> (Principal);
+  mint_token_in_collection: (nat, MintArgs) -> (variant { Ok: Nat; Err: TransferError });
+  transfer_tokens_in_collection: (nat, vec TransferArgs) -> (vec opt TransferResult);
+  burn_token_in_collection: (nat, Nat) -> (variant { Ok: Nat; Err: TransferError });
+  get_all_collections: () -> (vec NFTCollection) query;
 }

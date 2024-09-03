@@ -16,6 +16,7 @@ pub struct Message {
     pub dest_address: String,
     pub contract_address: String,
     pub token_id: u64,
+    pub token_metadata: String,
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
@@ -28,7 +29,7 @@ pub enum ExecuteError {
 
 // Function to notify external service about an event
 pub async fn notify_external_service(msg: Message) -> Result<(), ExecuteError> {
-    // Replace with the actual URL of the external service
+    // Should be replaced with the actual URL of the external service
     let url = "https://your.external.service/notify";
     let body = json!(msg).to_string();
 
@@ -44,7 +45,7 @@ pub async fn notify_external_service(msg: Message) -> Result<(), ExecuteError> {
         method: HttpMethod::POST,
         body: Some(body.into_bytes()),
         headers,
-        max_response_bytes: Some(1024 * 1024), // Example max response size
+        max_response_bytes: Some(1024 * 1024), //  max response size
         ..Default::default()
     };
 

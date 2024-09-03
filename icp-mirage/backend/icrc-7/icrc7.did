@@ -1,57 +1,53 @@
-type Account = record {
-    owner: principal;
-    subaccount: opt vec nat8;
-};
+type Nat = nat;
+type Principal = principal;
 
 type Subaccount = vec nat8;
 
-type MetadataEntry = record {
-    key: text;
-    value: text;
+type Account = record {
+  owner: Principal;
+  subaccount: opt Subaccount;
 };
 
-type TokenId = nat;
+type TokenId = Nat;
+
+type MetadataEntry = record {
+  key: text;
+  value: text;
+};
 
 type MintArgs = record {
-    to: Account;
-    token_id: TokenId;
-    metadata: vec MetadataEntry;
+  to: Account;
+  token_id: TokenId;
+  metadata: vec MetadataEntry;
 };
 
 type TransferArgs = record {
-    from: Account;
-    to: Account;
-    token_ids: vec TokenId;
+  from: Account;
+  to: Account;
+  token_ids: vec TokenId;
 };
 
 type TransferError = variant {
-    Unauthorized: record { token_ids: vec TokenId };
-    TokenAlreadyExists: record { token_id: TokenId };
-    TokenNotFound: record { token_id: TokenId };
-    InsufficientBalance: record { token_id: vec TokenId };
-    InvalidMetadata: record { token_id: TokenId };
+  Unauthorized: record { token_ids: vec TokenId };
+  TokenAlreadyExists: record { token_id: TokenId };
+  TokenNotFound: record { token_id: TokenId };
+  InsufficientBalance: record { token_id: TokenId };
+  InvalidMetadata: record { token_id: TokenId };
 };
 
 type TransferResult = variant {
-    Ok: nat;
-    Err: TransferError;
+  Ok: Nat;
+  Err: TransferError;
 };
 
-type Result_void = variant { Ok: null; Err: text };
-
-// Initialization method
 service : {
-    init_contract: (text, text) -> (Result_void);
-    
-    // Update methods
-    mint_token: (MintArgs) -> (variant { Ok: nat; Err: TransferError });
-    transfer_tokens: (vec TransferArgs) -> (vec opt TransferResult);
-    burn_token: (TokenId) -> (variant { Ok: nat; Err: TransferError });
-
-    // Query methods
-    get_token_metadata: (TokenId) -> (opt vec MetadataEntry) query;
-    get_balance: (Account) -> (vec TokenId) query;
-    get_total_supply: () -> (nat) query;
-    is_owner: (Account, TokenId) -> (bool) query;
-    get_tokens_of: (Account) -> (vec TokenId) query;
+  init_contract: (text, text) -> (variant { Ok: null; Err: text });
+  mint_token: (MintArgs) -> (variant { Ok: Nat; Err: TransferError });
+  transfer_tokens: (vec TransferArgs) -> (vec opt TransferResult);
+  burn_token: (TokenId) -> (variant { Ok: Nat; Err: TransferError });
+  get_token_metadata: (TokenId) -> (opt vec MetadataEntry) query;
+  get_balance: (Account) -> (vec TokenId) query;
+  get_total_supply: () -> (Nat) query;
+  is_owner: (Account, TokenId) -> (bool) query;
+  get_tokens_of: (Account) -> (vec TokenId) query;
 }

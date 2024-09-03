@@ -1,3 +1,5 @@
+type RejectionCode = nat32;
+
 type Message = record {
   id: text;
   nonce: nat64;
@@ -7,11 +9,12 @@ type Message = record {
   dest_address: text;
   contract_address: text;
   token_id: nat64;
+  token_metadata: text;
 };
 
 type ExecuteError = variant {
   HttpError: record {
-    rejection_code: nat32;
+    rejection_code: RejectionCode;
     message: text;
   };
 };

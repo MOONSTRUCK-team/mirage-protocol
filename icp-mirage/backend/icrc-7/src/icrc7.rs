@@ -45,7 +45,7 @@ pub enum TransferError {
 
 // Global state for the NFT contract
 thread_local! {
-    static CONTRACT: RefCell<Option<NFTContract>> = RefCell::new(None);
+    pub static CONTRACT: RefCell<Option<NFTContract>> = RefCell::new(None);
 }
 
 // Metadata structure with PartialEq derived

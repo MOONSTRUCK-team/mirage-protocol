@@ -20,6 +20,13 @@
       "package":"icrc-7",
       "build": "cargo build --target wasm32-unknown-unknown --release",
       "wasm": "target/wasm32-unknown-unknown/release/bridge_common_layer.wasm"
+    },
+    "manager": {
+      "candid": "backend/icrc-7/manager.did",
+      "type": "rust",
+      "package":"icrc-7",
+      "build": "cargo build --target wasm32-unknown-unknown --release",
+      "wasm": "target/wasm32-unknown-unknown/release/manager.wasm"
     }
   },
   "defaults": {
