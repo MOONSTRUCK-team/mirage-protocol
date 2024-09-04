@@ -39,3 +39,22 @@ In order to properly test the bridge, both the EVM and ICP nodes need to be runn
 ```bash
 docker compose up --build
 ```
+
+
+
+
+### Setting up the ICP listener
+
+ICP listener is a service that exposes the endpoint intended as the contact with the ICP network. Think about it as the webhook that will be called by the ICP side of the Bridge.
+
+To setup the listener, it must utilize tls certificates.
+For the testing purposes, the keys and certificates are located and can be used from the `local/bridge` directory.
+
+For the production, the certificates should be generated and stored in a secure way. Ideally, they would be injected into the bridge from the secure enviroment like secrets.
+
+Test certificates are generated using `mkcert` tool
+
+```bash
+mkcert --install
+mkcert example.com "*.example.com" example.test localhost 127.0.0.1 ::1
+```
