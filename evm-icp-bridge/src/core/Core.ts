@@ -43,16 +43,18 @@ export class Core {
         const bridgeMediatorId = EnvReader.get(Keys.ICP_CANISTER_ID);
         const secretKey = EnvReader.get(Keys.ICP_EXECUTOR_SECRET_KEY);
         const port = Number(EnvReader.get(Keys.ICP_LISTENER_PORT));
+        const tlsCertPath = EnvReader.get(Keys.ICP_LISTENER_TLS_CERT_PATH);
+        const tlsCertKeyPath = EnvReader.get(Keys.ICP_LISTENER_TLS_CERT_KEY_PATH);
 
         return new PluginImpl(
             ChainId.ICP,
-            new Icp.IcpListenerImpl(port),
+            new Icp.IcpListenerImpl(port, tlsCertPath, tlsCertKeyPath),
             new Icp.IcpExecutorImpl(host, bridgeMediatorId, secretKey),
             this.router
         );
     }
 
     getPlugin(chainId: ChainId): Plugin | undefined {
-        return this.plugins.get(chainId);
+        return this.plugins.get(Number(chainId));
     }
 }

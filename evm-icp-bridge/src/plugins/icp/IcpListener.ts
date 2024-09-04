@@ -3,17 +3,28 @@ import { serve } from 'bun';
 
 export class IcpListenerImpl implements Listener {
     private port: number;
+    private tlsCertPath: string;
+    private tlsKeyPath: string;
     private onMessageReceived: MessageCallback | undefined;
 
-    constructor(port: number) {
+    constructor(port: number, tlsCertPath: string, tlsKeyPath: string) {
         this.port = port;
+        // TODO Extend with the ability to read the content of these from env secrets
+        this.tlsCertPath = tlsCertPath;
+        this.tlsKeyPath = tlsKeyPath;
     }
 
     setup(onMessageReceived: MessageCallback): void {
         this.onMessageReceived = onMessageReceived;
+
         const server = serve({
             port: this.port,
+            tls: {
+                cert: Bun.file(this.tlsCertPath),
+                key: Bun.file(this.tlsKeyPath),
+            },
             fetch: async (req: Request): Promise<Response> => {
+                console.log('Request received:', req.url, req.method);
                 const { method, url } = req;
                 const { pathname } = new URL(url);
                 if (method === 'POST' && pathname === '/message') {
