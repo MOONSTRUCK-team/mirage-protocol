@@ -1,4 +1,4 @@
-use crate::bridge_common_layer::{notify_external_service, Message};
+use crate::bridge_common_layer::{get_message_from_bridge, notify_external_service, Message};
 use crate::icrc7::{Account, MetadataEntry, MintArgs, TransferError, CONTRACT};
 use candid::{Nat, Principal};
 use ic_cdk_macros::update;
@@ -109,10 +109,14 @@ impl Manager {
 // Update functions exposed to the canister
 
 #[update]
-async fn mint(msg: Message) -> Result<Nat, String> {
-    match Manager::handle_mint_message(msg).await {
-        Ok(token_id) => Ok(token_id),
-        Err(err) => Err(format!("Failed to mint token: {:?}", err)),
+async fn mint() -> Result<Nat, String> {
+    // Fetch the message from bridge_common_layer
+    match get_message_from_bridge().await {
+        Ok(msg) => match Manager::handle_mint_message(msg).await {
+            Ok(token_id) => Ok(token_id),
+            Err(err) => Err(format!("Failed to mint token: {:?}", err)),
+        },
+        Err(e) => Err(format!("Failed to fetch message: {:?}", e)),
     }
 }
 

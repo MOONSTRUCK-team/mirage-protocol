@@ -1,3 +1,4 @@
+type Nat = nat;
 type RejectionCode = nat32;
 
 type Message = record {
@@ -21,4 +22,5 @@ type ExecuteError = variant {
 
 service : {
   notify_external_service: (Message) -> (variant { Ok: null; Err: ExecuteError });
+  get_message_from_bridge: () -> (variant { Ok: Message; Err: ExecuteError });
 }

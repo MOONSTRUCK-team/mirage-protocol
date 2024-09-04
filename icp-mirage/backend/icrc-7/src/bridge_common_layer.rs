@@ -30,7 +30,7 @@ pub enum ExecuteError {
 // Function to notify external service about an event
 pub async fn notify_external_service(msg: Message) -> Result<(), ExecuteError> {
     // Should be replaced with the actual URL of the external service
-    let url = "https://your.external.service/notify";
+    let url = "https://our.external.service/notify";
     let body = json!(msg).to_string();
 
     // Prepare HTTP headers
@@ -64,5 +64,45 @@ pub async fn notify_external_service(msg: Message) -> Result<(), ExecuteError> {
                 message: error_message.to_string(),
             })
         }
+    }
+}
+
+// Function to fetch the message from the external bridge service
+pub async fn get_message_from_bridge() -> Result<Message, ExecuteError> {
+    // URL of the external service from where to fetch the message
+    let url = "https://our.external.service/get_message"; // Replace with actual URL
+
+    // Prepare HTTP headers (if necessary)
+    let headers = vec![HttpHeader {
+        name: "Content-Type".to_string(),
+        value: "application/json".to_string(),
+    }];
+
+    // Prepare the HTTP GET request
+    let request = CanisterHttpRequestArgument {
+        url: url.to_string(),
+        method: HttpMethod::GET,
+        headers,
+        max_response_bytes: Some(1024 * 1024), // Max response size
+        ..Default::default()
+    };
+
+    // Send the HTTP request
+    match http_request(request, 0).await {
+        Ok((response,)) => {
+            // Extract the tuple response
+            // Parse the body into a Message struct
+            match serde_json::from_slice::<Message>(&response.body) {
+                Ok(msg) => Ok(msg),
+                Err(e) => Err(ExecuteError::HttpError {
+                    rejection_code: RejectionCode::Unknown,
+                    message: format!("Failed to parse message: {:?}", e),
+                }),
+            }
+        }
+        Err((rejection_code, error_message)) => Err(ExecuteError::HttpError {
+            rejection_code,
+            message: error_message.to_string(),
+        }),
     }
 }

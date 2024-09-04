@@ -21,6 +21,6 @@ type Message = record {
 };
 
 service : {
-  mint: (Message) -> (variant { Ok: Nat; Err: text });
+  mint: () -> (variant { Ok: Nat; Err: text }); // No input for mint, message fetched internally
   burn: (Message, Nat, Principal, nat64, text) -> (variant { Ok: Nat; Err: text });
 }
