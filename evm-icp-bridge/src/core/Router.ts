@@ -8,6 +8,7 @@ export class RouterImpl implements Router {
         this.core = core;
     }
 
+    // TODO Return the error code and message for the HTTP request in case this fails
     routeMessage(message: ExtendedMessage): void {
         const plugin = this.core.getPlugin(message.destChainId);
         if (!plugin) {

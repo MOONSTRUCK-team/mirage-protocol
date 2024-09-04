@@ -1,19 +1,28 @@
-import type { Message, Plugin, Router } from "./Types";
+import type { Plugin, Router } from "./Types";
 import { EnvReader, Keys } from '../utils/envReader';
 import { PluginImpl } from "../plugins/common/Plugin";
 import { RouterImpl } from "./Router";
-import * as Evm from '../plugins/evm/index';
-import * as Icp from '../plugins/icp/index';
 import { ChainId } from "./Types";
 
+import * as Evm from '../plugins/evm/index';
+import * as Icp from '../plugins/icp/index';
+
 export class Core { 
-    private plugins = new Map<number, Plugin>();
-    private router = new RouterImpl(this);
+    private plugins: Map<ChainId, Plugin>;
+    private router: Router;
+
+    constructor() {
+        this.router = new RouterImpl(this);
+        this.plugins = new Map<ChainId, Plugin>();
+    }
 
     async run(): Promise<void> { 
         console.log('Initing Core');
-        this.plugins.set(ChainId.Ethereum, this.setupEvmPlugin());
-        this.plugins.set(ChainId.ICP, this.setupIcpPlugin());
+
+        const evmPlugin = this.setupEvmPlugin();
+        this.plugins.set(ChainId.Ethereum, evmPlugin);
+        const icpPlugin = this.setupIcpPlugin();
+        this.plugins.set(ChainId.ICP, icpPlugin);
      }
 
     setupEvmPlugin(): PluginImpl {

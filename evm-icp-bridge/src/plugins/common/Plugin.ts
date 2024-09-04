@@ -17,7 +17,7 @@ export class PluginImpl implements Plugin {
         this.listener.setup(this.onMessageReceived);
     }
 
-    onMessageReceived(message: ExtendedMessage): void {
+    onMessageReceived = (message: ExtendedMessage): void => {
         this.router.routeMessage(message);
     }
 }

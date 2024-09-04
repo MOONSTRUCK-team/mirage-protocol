@@ -31,6 +31,10 @@ export class IcpListenerImpl implements Listener {
             return new Response('server_side_error', { status: 400 });
         }
 
+        if(req.headers.get('content-type') !== 'application/json') {
+            return new Response('invalid_content_type', { status: 400 });
+        }
+
         const message =  await req.json();
         try {
             // TODO Make a matching types for EVM and ICP messages (uint256 cannot be represented on ICP)
