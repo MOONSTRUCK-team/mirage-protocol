@@ -21,10 +21,16 @@
 ### Running in container
 
 1. Build image
+    - Build image matching the host's architecture
     ```shell
     docker build -t evm-test-setup .
     ```
+
+    - Build image on a `arm64` host
+    ```shell
+    docker build -t evm-test-setup --platform linux/amd64 .
+    ```
 2. Run container
     ```shell
-    docker run -dit evm-test-setup
+    docker run -dit -p 8545:8545 evm-test-setup
     ```
