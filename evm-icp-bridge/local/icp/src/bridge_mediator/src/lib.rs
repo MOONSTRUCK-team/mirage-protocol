@@ -39,7 +39,7 @@ fn execute_message(msg: Message) {
 #[ic_cdk::update]
 async fn send_message() -> Result<(), ExecuteError> {
     let host = "localhost";
-    let url = "https://localhost:4942/message";
+    let url = "https://localhost:4942/message"; // https://bridge-service:4942/message for Docker setup
 
     let request_headers = vec![
         HttpHeader {

@@ -3,3 +3,7 @@ node_modules
 .gitignore
 README.md
 .env
+
+# ignore eveyrthing except bridge files
+local
+!local/bridge
