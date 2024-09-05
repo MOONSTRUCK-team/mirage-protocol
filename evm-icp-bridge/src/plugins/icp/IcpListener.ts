@@ -51,13 +51,13 @@ export class IcpListenerImpl implements Listener {
             // TODO Make a matching types for EVM and ICP messages (uint256 cannot be represented on ICP)
             const parsedMessage: Message = {
                 id: String(message.id),
-                opType: BigInt(message.opType),
+                opType: BigInt(message.op_type),
                 nonce: BigInt(message.nonce),
-                srcChainId: message.srcChainId,
-                destChainId: message.destChainId,
-                destAddress: message.destAddress,
-                contract: message.contract,
-                tokenId: BigInt(message.tokenId),
+                srcChainId: message.src_chain_id,
+                destChainId: message.dest_chain_id,
+                destAddress: message.dest_address,
+                contract: message.contract_address,
+                tokenId: BigInt(message.token_id),
             };
 
             this.onMessageReceived(parsedMessage);
