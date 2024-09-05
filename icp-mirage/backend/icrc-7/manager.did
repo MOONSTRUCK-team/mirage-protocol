@@ -8,19 +8,11 @@ type TransferError = variant {
   InvalidMetadata: record { token_id: Nat };
 };
 
-type Message = record {
-  id: text;
-  nonce: nat64;
-  op_type: nat8;
-  src_chain_id: nat64;
-  dest_chain_id: nat64;
-  dest_address: text;
-  contract_address: text;
-  token_id: nat64;
-  token_metadata: text;
+type MintArgs = record {
+  token_id: Nat;
 };
 
 service : {
-  mint: () -> (variant { Ok: Nat; Err: text }); // No input for mint, message fetched internally
-  burn: (Message, Nat, Principal, nat64, text) -> (variant { Ok: Nat; Err: text });
+  mint: (MintArgs) -> (variant { Ok: Nat; Err: TransferError });
+  token_mint: (MintArgs) -> (variant { Ok: Nat; Err: text });
 }

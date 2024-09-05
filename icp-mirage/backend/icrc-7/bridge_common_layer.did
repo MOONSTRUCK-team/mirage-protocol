@@ -1,5 +1,9 @@
 type Nat = nat;
-type RejectionCode = nat32;
+type Principal = principal;
+
+type MintArgs = record {
+  token_id: nat;
+};
 
 type Message = record {
   id: text;
@@ -13,14 +17,7 @@ type Message = record {
   token_metadata: text;
 };
 
-type ExecuteError = variant {
-  HttpError: record {
-    rejection_code: RejectionCode;
-    message: text;
-  };
-};
-
 service : {
-  notify_external_service: (Message) -> (variant { Ok: null; Err: ExecuteError });
-  get_message_from_bridge: () -> (variant { Ok: Message; Err: ExecuteError });
+  process_bridge_message: () ->  (variant { Ok: Nat; Err: text });
+  token_mint: (MintArgs) -> (variant { Ok: Nat; Err: text });
 }
