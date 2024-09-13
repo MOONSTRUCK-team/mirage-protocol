@@ -1,4 +1,5 @@
 use candid::{CandidType, Nat, Principal};
+use ic_cdk::init;
 use ic_cdk_macros::{query, update};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -175,14 +176,10 @@ impl NFTContract {
 }
 
 // Initialize contract with dynamic values
-#[update]
-fn init_contract(name: String, symbol: String) -> Result<(), String> {
+#[init]
+fn init(name: String, symbol: String) {
     CONTRACT.with(|contract| {
-        if contract.borrow().is_some() {
-            return Err("Contract already initialized".to_string());
-        }
         *contract.borrow_mut() = Some(NFTContract::new(name, symbol));
-        Ok(())
     })
 }
 

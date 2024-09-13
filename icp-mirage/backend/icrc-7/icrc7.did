@@ -40,8 +40,7 @@ type TransferResult = variant {
   Err: TransferError;
 };
 
-service : {
-  init_contract: (text, text) -> (variant { Ok: null; Err: text });
+service : (text, text) -> {
   mint_token: (MintArgs) -> (variant { Ok: Nat; Err: TransferError });
   transfer_tokens: (vec TransferArgs) -> (vec opt TransferResult);
   burn_token: (TokenId) -> (variant { Ok: Nat; Err: TransferError });
