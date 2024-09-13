@@ -44,6 +44,8 @@ service : (text, text) -> {
   mint_token: (MintArgs) -> (variant { Ok: Nat; Err: TransferError });
   transfer_tokens: (vec TransferArgs) -> (vec opt TransferResult);
   burn_token: (TokenId) -> (variant { Ok: Nat; Err: TransferError });
+  icrc7_name : () -> (text) query;
+  icrc7_symbol : () -> (text) query;
   get_token_metadata: (TokenId) -> (opt vec MetadataEntry) query;
   get_balance: (Account) -> (vec TokenId) query;
   get_total_supply: () -> (Nat) query;

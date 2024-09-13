@@ -234,6 +234,28 @@ async fn burn_token(token_id: TokenId) -> Result<Nat, TransferError> {
 
 // Query functions
 
+// Get NFT collection name
+#[query]
+fn icrc7_name() -> String {
+    CONTRACT.with(|contract| {
+        contract
+            .borrow()
+            .as_ref()
+            .map_or(String::from(""), |nft_contract| nft_contract.name.clone())
+    })
+}
+
+// Get NFT symbol name
+#[query]
+fn icrc7_symbol() -> String {
+    CONTRACT.with(|contract| {
+        contract
+            .borrow()
+            .as_ref()
+            .map_or(String::from(""), |nft_contract| nft_contract.symbol.clone())
+    })
+}
+
 // Get token metadata by token ID
 #[query]
 fn get_token_metadata(token_id: TokenId) -> Option<Vec<MetadataEntry>> {
