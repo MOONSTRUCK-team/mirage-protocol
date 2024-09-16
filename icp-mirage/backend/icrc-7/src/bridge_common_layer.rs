@@ -1,13 +1,16 @@
-use crate::icrc7::MintArgs;
-use crate::manager::token_mint; // Import the `token_mint` function directly
+use crate::icrc7::{MintArgs, TransferError};
 use candid::Nat;
 use candid::{CandidType, Principal};
+use ic_cdk::api::call::RejectionCode;
 use ic_cdk::api::management_canister::http_request::{
     http_request, CanisterHttpRequestArgument, HttpHeader, HttpMethod,
 };
+use ic_cdk::call;
 use ic_cdk_macros::update;
 
 use serde::{Deserialize, Serialize};
+
+const MANAGER_CANISTER_PRINCIPAL: &str = "be2us-64aaa-aaaaa-qaabq-cai";
 
 // Define the Message struct, representing a message from the external bridge
 #[derive(Serialize, Deserialize, CandidType, Clone)]
@@ -25,56 +28,39 @@ pub struct Message {
 
 // Function to fetch a message from the external bridge service and mint a token
 #[update]
-pub async fn process_bridge_message() -> Result<Nat, String> {
-    // Define the URL of the external service that provides the message
-    let url = "https://our.external.service/get_message"; // Replace with actual URL
-
-    // Set the necessary HTTP headers, specifying that the content is JSON
-    let headers = vec![HttpHeader {
-        name: "Content-Type".to_string(),
-        value: "application/json".to_string(),
-    }];
-
-    // Prepare the HTTP GET request to fetch the message
-    let request = CanisterHttpRequestArgument {
-        url: url.to_string(),                  // Set the request URL
-        method: HttpMethod::GET,               // Use the GET method to retrieve data
-        headers,                               // Include the content-type header
-        max_response_bytes: Some(1024 * 1024), // Set maximum allowed response size to 1 MB
-        ..Default::default()                   // Use default values for other fields
+pub async fn execute_message(msg: Message) -> Result<Nat, String> {
+    // Convert the Message into MintArgs to use with the mint function
+    let mint_args = MintArgs {
+        to: crate::icrc7::Account {
+            owner: Principal::from_text(msg.dest_address).unwrap(), // Convert dest_address to Principal
+            subaccount: None,                                       // No subaccount
+        },
+        token_id: Nat::from(msg.token_id), // Convert token_id to Nat
+        metadata: vec![],                  // No metadata provided
     };
 
-    // Send the HTTP request and wait for the response asynchronously
-    match http_request(request, 1_000_000_000).await {
-        Ok((response,)) => {
-            // If the request succeeds
-            // Attempt to deserialize the response body into a Message struct
-            match serde_json::from_slice::<Message>(&response.body) {
-                Ok(msg) => {
-                    // If deserialization succeeds
-                    // Convert the Message into MintArgs to use with the mint function
-                    let mint_args = MintArgs {
-                        to: crate::icrc7::Account {
-                            owner: Principal::from_text(msg.dest_address).unwrap(), // Convert dest_address to Principal
-                            subaccount: None,                                       // No subaccount
-                        },
-                        token_id: Nat::from(msg.token_id), // Convert token_id to Nat
-                        metadata: vec![],                  // No metadata provided
-                    };
+    // Get NFT collection
+    let get_collection_call_result = call_token_mint(
+        Principal::from_text(MANAGER_CANISTER_PRINCIPAL).unwrap(),
+        mint_args,
+    )
+    .await;
+    match get_collection_call_result {
+        Ok(token_id) => return Ok(token_id),
+        Err(e) => return Err(e),
+    }
+}
 
-                    // Call the token_mint function directly
-                    match token_mint(mint_args).await {
-                        Ok(token_id) => Ok(token_id), // Return the token ID if successful
-                        Err(err) => Err(format!("Failed to mint token: {:?}", err)), // Return error if minting fails
-                    }
-                }
-                Err(e) => Err(format!("Failed to parse message: {:?}", e)), // Return error if deserialization fails
+async fn call_token_mint(canister_id: Principal, mint_args: MintArgs) -> Result<Nat, String> {
+    let call_result: Result<(Result<Nat, TransferError>,), (RejectionCode, String)> =
+        call(canister_id, "token_mint", (mint_args,)).await;
+    match call_result {
+        Ok(value) => match value.0 {
+            Ok(token_id) => {
+                return Ok(token_id);
             }
-        }
-        // Handle any errors that occur during the HTTP request
-        Err((rejection_code, error_message)) => Err(format!(
-            "Failed to fetch message from bridge: {:?} - {:?}",
-            rejection_code, error_message
-        )),
+            Err(err) => return Err(format!("Failed to mint token: {:?}", err)),
+        },
+        Err(err) => return Err(format!("Failed mint call: {:?} - {:?}", err.0, err.1)),
     }
 }

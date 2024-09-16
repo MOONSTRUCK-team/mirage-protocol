@@ -1,10 +1,6 @@
 type Nat = nat;
 type Principal = principal;
 
-type MintArgs = record {
-  token_id: nat;
-};
-
 type Message = record {
   id: text;
   nonce: nat64;
@@ -19,5 +15,5 @@ type Message = record {
 
 service : {
   process_bridge_message: () ->  (variant { Ok: Nat; Err: text });
-  token_mint: (MintArgs) -> (variant { Ok: Nat; Err: text });
+  execute_message: (Message) -> (variant { Ok: Nat; Err: text });
 }
