@@ -41,6 +41,8 @@ thread_local! {
 #[ic_cdk_macros::update(guard = "is_allowed_caller")]
 pub async fn get_or_create_nft_collection(
     src_chain_contract_addr: String,
+    name: String,
+    symbol: String,
 ) -> Result<Principal, String> {
     ic_cdk::print(format!(
         "Source chain contract address: {} {}",
@@ -57,7 +59,7 @@ pub async fn get_or_create_nft_collection(
         return Ok(collection_id);
     }
     // Otherwise, create a new collection canister and return its principal
-    let result = create_new_cansister_with_wasm_impl().await;
+    let result = create_new_cansister_with_wasm_impl(name, symbol).await;
     match result {
         Ok(canister_id) => {
             FACTORY.with(|factory| {
@@ -90,7 +92,7 @@ pub fn get_all_collections() -> HashMap<String, Principal> {
 }
 
 mod factory_helper {
-    use candid::Principal;
+    use candid::{encode_args, Principal};
     use ic_cdk::api::management_canister::main::{
         create_canister, install_code, CanisterInstallMode, CanisterSettings,
         CreateCanisterArgument, InstallCodeArgument,
@@ -128,7 +130,11 @@ mod factory_helper {
         }
     }
 
-    async fn install_wasm(canister: String) -> Result<String, String> {
+    async fn install_wasm(
+        canister: String,
+        name: String,
+        symbol: String,
+    ) -> Result<String, String> {
         let canister_id: Principal;
         match Principal::from_text(canister) {
             Ok(v) => canister_id = v,
@@ -140,7 +146,8 @@ mod factory_helper {
                 return Err(error);
             }
         }
-        let mut argument: Vec<u8> = Vec::new();
+        let argument = encode_args((name.clone(), symbol.clone()))
+            .expect("Failed to serialize install arguments.");
 
         let arg = InstallCodeArgument {
             mode: CanisterInstallMode::Install,
@@ -159,13 +166,15 @@ mod factory_helper {
         }
     }
 
-    pub async fn create_new_cansister_with_wasm_impl() -> Result<Principal, String> {
+    pub async fn create_new_cansister_with_wasm_impl(
+        name: String,
+        symbol: String,
+    ) -> Result<Principal, String> {
         let created_canister: Principal;
-
         let create_result = create_new_canister().await;
         match create_result {
             Ok(canister_id) => {
-                let callres = install_wasm(canister_id.to_text()).await;
+                let callres = install_wasm(canister_id.to_text(), name, symbol).await;
                 match callres {
                     Err(e) => {
                         let error = format!("ERROR - Could not install WASM (SuperIndex) - {}", e);

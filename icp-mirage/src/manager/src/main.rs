@@ -1,16 +1,29 @@
-use candid::{Nat, Principal};
+use candid::{CandidType, Nat, Principal};
 use ic_cdk::api::call::{call, RejectionCode};
 use ic_cdk_macros::update;
 use icrc7::types::{MintArgs, TransferError};
+use serde::{Deserialize, Serialize};
 
 const TOKEN_FACTORY_CANISTER_PRINCIPAL: &str = "bkyz2-fmaaa-aaaaa-qaaaq-cai";
 
+#[derive(Clone, Debug, Serialize, Deserialize, CandidType)]
+pub struct SourceCollectionArgs {
+    pub address: String,
+    pub name: String,
+    pub symbol: String,
+}
+
 #[update]
-pub async fn token_mint(mint_args: MintArgs) -> Result<Nat, String> {
+pub async fn token_mint(
+    src_collection_args: SourceCollectionArgs,
+    mint_args: MintArgs,
+) -> Result<Nat, String> {
     // Get NFT collection
     let get_collection_call_result = call_get_collection(
         Principal::from_text(TOKEN_FACTORY_CANISTER_PRINCIPAL).unwrap(),
-        "test".to_string(),
+        src_collection_args.address,
+        src_collection_args.name,
+        src_collection_args.symbol,
     )
     .await;
     match get_collection_call_result {
@@ -35,11 +48,13 @@ pub async fn token_mint(mint_args: MintArgs) -> Result<Nat, String> {
 async fn call_get_collection(
     canister_id: Principal,
     src_chain_contract_addr: String,
+    name: String,
+    symbol: String,
 ) -> Result<Principal, String> {
     let call_result: Result<(Result<Principal, String>,), (RejectionCode, String)> = call(
         canister_id,
         "get_or_create_nft_collection",
-        (src_chain_contract_addr,),
+        (src_chain_contract_addr, name, symbol),
     )
     .await;
     match call_result {

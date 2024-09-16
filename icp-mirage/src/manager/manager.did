@@ -1,6 +1,12 @@
 type Nat = nat;
 type Principal = principal;
 
+type SourceCollectionArgs = record {
+  address: text;
+  name: text;
+  symbol: text;
+};
+
 type Subaccount = vec nat8;
 
 type Account = record {
@@ -22,5 +28,5 @@ type MintArgs = record {
 };
 
 service : {
-  token_mint: (MintArgs) -> (variant { Ok: Nat; Err: text });
+  token_mint: (src_collection_args: SourceCollectionArgs, mint_args: MintArgs) -> (variant { Ok: Nat; Err: text });
 }
