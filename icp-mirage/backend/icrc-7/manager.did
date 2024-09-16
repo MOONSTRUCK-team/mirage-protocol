@@ -1,18 +1,26 @@
 type Nat = nat;
 type Principal = principal;
-type TransferError = variant {
-  Unauthorized: record { token_ids: vec Nat };
-  TokenAlreadyExists: record { token_id: Nat };
-  TokenNotFound: record { token_id: Nat };
-  InsufficientBalance: record { token_id: Nat };
-  InvalidMetadata: record { token_id: Nat };
+
+type Subaccount = vec nat8;
+
+type Account = record {
+  owner: Principal;
+  subaccount: opt Subaccount;
+};
+
+type TokenId = Nat;
+
+type MetadataEntry = record {
+  key: text;
+  value: text;
 };
 
 type MintArgs = record {
-  token_id: Nat;
+  to: Account;
+  token_id: TokenId;
+  metadata: vec MetadataEntry;
 };
 
 service : {
-  mint: (MintArgs) -> (variant { Ok: Nat; Err: TransferError });
   token_mint: (MintArgs) -> (variant { Ok: Nat; Err: text });
 }

@@ -1,35 +1,73 @@
-use crate::icrc7::{MintArgs, TransferError, CONTRACT};
-use candid::Nat;
+use crate::icrc7::{MintArgs, TransferError};
+use candid::{Nat, Principal};
+use ic_cdk::api::call::{call, RejectionCode};
 use ic_cdk_macros::update;
 
-pub struct Manager;
-
-impl Manager {
-    // Function to handle minting by invoking the mint method of the icrc7 contract directly
-    pub fn mint(mint_args: MintArgs) -> Result<Nat, TransferError> {
-        // Access the global CONTRACT using thread_local storage, ensuring safe access
-        CONTRACT.with(|contract| {
-            // Check if the contract has been initialized and is available
-            if let Some(ref mut nft_contract) = *contract.borrow_mut() {
-                // Call the mint method of the NFT contract, passing in the MintArgs
-                nft_contract.mint(mint_args)
-            } else {
-                // If the contract is not initialized, return an Unauthorized TransferError
-                Err(TransferError::Unauthorized {
-                    token_ids: vec![mint_args.token_id.clone()], // Specify the token ID that failed
-                })
-            }
-        })
-    }
-}
+const TOKEN_FACTORY_CANISTER_PRINCIPAL: &str = "bkyz2-fmaaa-aaaaa-qaaaq-cai";
 
 #[update]
 pub async fn token_mint(mint_args: MintArgs) -> Result<Nat, String> {
-    // Call the mint function in the Manager struct to handle the minting logic
-    match Manager::mint(mint_args) {
-        // If the minting is successful, return the minted token's ID
-        Ok(token_id) => Ok(token_id),
-        // If minting fails, return an error message with details
-        Err(err) => Err(format!("Failed to mint token: {:?}", err)),
+    // Get NFT collection
+    let get_collection_call_result = call_get_collection(
+        Principal::from_text(TOKEN_FACTORY_CANISTER_PRINCIPAL).unwrap(),
+        "test".to_string(),
+    )
+    .await;
+    match get_collection_call_result {
+        Ok(collection_id) => {
+            //let call_result: Result<(Nat,), (RejectionCode, String)> =
+            //    call(collection_id, "get_total_supply", ()).await;
+            //match call_result {
+            //    Ok(value) => return Ok(value.0),
+            //    Err(e) => return Err(e.1),
+            //}
+            // Mint token
+            let mint_call_result = call_mint(collection_id, mint_args).await;
+            match mint_call_result {
+                Ok(token_id) => return Ok(token_id),
+                Err(e) => return Err(e),
+            }
+        }
+        Err(e) => return Err(e),
+    }
+}
+
+async fn call_get_collection(
+    canister_id: Principal,
+    src_chain_contract_addr: String,
+) -> Result<Principal, String> {
+    let call_result: Result<(Result<Principal, String>,), (RejectionCode, String)> = call(
+        canister_id,
+        "get_or_create_nft_collection",
+        (src_chain_contract_addr,),
+    )
+    .await;
+    match call_result {
+        Ok(value) => match value.0 {
+            Ok(collection_id) => {
+                return Ok(collection_id);
+            }
+            Err(err) => return Err(format!("Failed to get or create NFT collection: {:?}", err)),
+        },
+        Err(err) => {
+            return Err(format!(
+                "Failed get or create NFT collection call: {:?} - {:?}",
+                err.0, err.1
+            ))
+        }
+    }
+}
+
+async fn call_mint(canister_id: Principal, mint_args: MintArgs) -> Result<Nat, String> {
+    let call_result: Result<(Result<Nat, TransferError>,), (RejectionCode, String)> =
+        call(canister_id, "mint_token", (mint_args,)).await;
+    match call_result {
+        Ok(value) => match value.0 {
+            Ok(token_id) => {
+                return Ok(token_id);
+            }
+            Err(err) => return Err(format!("Failed to mint token: {:?}", err)),
+        },
+        Err(err) => return Err(format!("Failed mint call: {:?} - {:?}", err.0, err.1)),
     }
 }
