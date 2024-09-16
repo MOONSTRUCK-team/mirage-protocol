@@ -1,30 +1,30 @@
 {
   "canisters": {
     "icrc7": {
-      "candid": "backend/icrc-7/icrc7.did",
+      "candid": "src/icrc7/icrc7.did",
       "type": "rust",
-      "package":"icrc-7",
+      "package":"icrc7",
       "build": "cargo build --target wasm32-unknown-unknown --release",
       "wasm": "target/wasm32-unknown-unknown/release/icrc7.wasm"
     },
     "token_factory": {
-      "candid": "backend/icrc-7/token_factory.did",
+      "candid": "src/token_factory/token_factory.did",
       "type": "rust",
-      "package":"icrc-7",
+      "package":"token_factory",
       "build": "cargo build --target wasm32-unknown-unknown --release",
       "wasm": "target/wasm32-unknown-unknown/release/token_factory.wasm"
     },
     "bridge_common_layer": {
-      "candid": "backend/icrc-7/bridge_common_layer.did",
+      "candid": "src/bridge_common_layer/bridge_common_layer.did",
       "type": "rust",
-      "package":"icrc-7",
+      "package":"bridge_common_layer",
       "build": "cargo build --target wasm32-unknown-unknown --release",
       "wasm": "target/wasm32-unknown-unknown/release/bridge_common_layer.wasm"
     },
     "manager": {
-      "candid": "backend/icrc-7/manager.did",
+      "candid": "src/manager/manager.did",
       "type": "rust",
-      "package":"icrc-7",
+      "package":"manager",
       "build": "cargo build --target wasm32-unknown-unknown --release",
       "wasm": "target/wasm32-unknown-unknown/release/manager.wasm"
     }

@@ -53,6 +53,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "bridge_common_layer"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "ic-cdk",
+ "ic-cdk-macros",
+ "ic-cdk-timers",
+ "ic-stable-structures",
+ "icrc7",
+ "num-traits",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "byteorder"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -330,7 +345,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "icrc-7"
+name = "icrc7"
 version = "0.1.0"
 dependencies = [
  "candid",
@@ -366,6 +381,21 @@ name = "libc"
 version = "0.2.155"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97b3888a4aecf77e811145cadf6eef5901f4782c53886191b2f693f24761847c"
+
+[[package]]
+name = "manager"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "ic-cdk",
+ "ic-cdk-macros",
+ "ic-cdk-timers",
+ "ic-stable-structures",
+ "icrc7",
+ "num-traits",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "memchr"
@@ -605,6 +635,20 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.74",
+]
+
+[[package]]
+name = "token_factory"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "ic-cdk",
+ "ic-cdk-macros",
+ "ic-cdk-timers",
+ "ic-stable-structures",
+ "num-traits",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

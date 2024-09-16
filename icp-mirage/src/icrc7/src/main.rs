@@ -1,59 +1,18 @@
-use candid::{CandidType, Nat, Principal};
+use candid::{CandidType, Nat};
 use ic_cdk::init;
 use ic_cdk_macros::{query, update};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashMap;
+use types::{
+    Account, MetadataEntry, MintArgs, TokenId, TransferArgs, TransferError, TransferResult,
+};
 
-pub type Subaccount = [u8; 32];
-
-#[derive(Clone, Debug, Serialize, Deserialize, CandidType, PartialEq, Eq, Hash)]
-pub struct Account {
-    pub owner: Principal,
-    pub subaccount: Option<Subaccount>,
-}
-
-pub type TokenId = Nat;
-
-#[derive(Clone, Debug, Serialize, Deserialize, CandidType, PartialEq)]
-pub struct MintArgs {
-    pub to: Account,
-    pub token_id: TokenId,
-    pub metadata: Vec<MetadataEntry>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, CandidType)]
-pub struct TransferArgs {
-    pub from: Account,
-    pub to: Account,
-    pub token_ids: Vec<TokenId>,
-}
-
-#[derive(Debug, Clone, CandidType, Serialize, Deserialize, PartialEq)]
-pub enum TransferResult {
-    Ok(Nat),
-    Err(TransferError),
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, CandidType, PartialEq)]
-pub enum TransferError {
-    Unauthorized { token_ids: Vec<TokenId> },
-    TokenAlreadyExists { token_id: TokenId },
-    TokenNotFound { token_id: TokenId },
-    InsufficientBalance { token_id: TokenId },
-    InvalidMetadata { token_id: TokenId },
-}
+mod types;
 
 // Global state for the NFT contract
 thread_local! {
     pub static CONTRACT: RefCell<Option<NFTContract>> = RefCell::new(None);
-}
-
-// Metadata structure with PartialEq derived
-#[derive(Clone, Debug, Serialize, Deserialize, CandidType, PartialEq)]
-pub struct MetadataEntry {
-    pub key: String,
-    pub value: String,
 }
 
 // NFT Contract definition
@@ -320,3 +279,5 @@ fn get_tokens_of(account: Account) -> Vec<TokenId> {
         })
     })
 }
+
+fn main() {}

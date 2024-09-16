@@ -1,10 +1,15 @@
 [package]
-name = "icrc-7"
+name = "token_factory"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "token_factory"
+path = "src/main.rs"
+
 [lib]
 crate-type = ["cdylib", "rlib"]
+path = "src/lib.rs"
 
 [dependencies]
 candid = "0.10"

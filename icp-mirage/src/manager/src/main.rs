@@ -1,7 +1,7 @@
-use crate::icrc7::{MintArgs, TransferError};
 use candid::{Nat, Principal};
 use ic_cdk::api::call::{call, RejectionCode};
 use ic_cdk_macros::update;
+use icrc7::types::{MintArgs, TransferError};
 
 const TOKEN_FACTORY_CANISTER_PRINCIPAL: &str = "bkyz2-fmaaa-aaaaa-qaaaq-cai";
 
@@ -71,3 +71,5 @@ async fn call_mint(canister_id: Principal, mint_args: MintArgs) -> Result<Nat, S
         Err(err) => return Err(format!("Failed mint call: {:?} - {:?}", err.0, err.1)),
     }
 }
+
+fn main() {}

@@ -1,4 +1,3 @@
-use crate::icrc7::{MintArgs, TransferError};
 use candid::Nat;
 use candid::{CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
@@ -7,6 +6,7 @@ use ic_cdk::api::management_canister::http_request::{
 };
 use ic_cdk::call;
 use ic_cdk_macros::update;
+use icrc7::types::{Account, MintArgs, TransferError};
 
 use serde::{Deserialize, Serialize};
 
@@ -31,7 +31,7 @@ pub struct Message {
 pub async fn execute_message(msg: Message) -> Result<Nat, String> {
     // Convert the Message into MintArgs to use with the mint function
     let mint_args = MintArgs {
-        to: crate::icrc7::Account {
+        to: Account {
             owner: Principal::from_text(msg.dest_address).unwrap(), // Convert dest_address to Principal
             subaccount: None,                                       // No subaccount
         },
@@ -64,3 +64,5 @@ async fn call_token_mint(canister_id: Principal, mint_args: MintArgs) -> Result<
         Err(err) => return Err(format!("Failed mint call: {:?} - {:?}", err.0, err.1)),
     }
 }
+
+fn main() {}

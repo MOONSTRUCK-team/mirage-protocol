@@ -194,3 +194,5 @@ fn is_allowed_caller() -> Result<(), String> {
         Err("Only Manager canister can call this method.".to_string())
     }
 }
+
+fn main() {}

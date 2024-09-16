@@ -1,6 +1,8 @@
 [workspace]
 members = [
-    "backend/icrc-7",
-    
+    "src/bridge_common_layer",
+    "src/icrc7",
+    "src/manager",
+    "src/token_factory"    
 ]
 resolver = "2"
