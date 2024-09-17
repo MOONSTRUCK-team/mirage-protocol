@@ -28,8 +28,9 @@ export class EvmListenerImpl implements Listener {
                     messageData.contractAddress,
                     Number(messageData.tokenId
                 ));
+                const { name, symbol } = await this.metadataReader.readCollectionInfo(messageData.contractAddress);
                 const msg = this.parseMessage(id, messageData);
-                onMessageReceived(msg, metadata);
+                onMessageReceived(msg, name, symbol, metadata);
             }
             catch (e) {
                 console.error(e);

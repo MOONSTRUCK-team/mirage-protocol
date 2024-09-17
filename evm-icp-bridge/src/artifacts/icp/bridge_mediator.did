@@ -6,6 +6,8 @@ type Message = record{
     dest_chain_id: nat64;
     dest_address: text;
     contract_address: text;
+    collection_name: text;
+    collection_symbol: text;
     token_id: nat64;
     token_metadata: text;
 };

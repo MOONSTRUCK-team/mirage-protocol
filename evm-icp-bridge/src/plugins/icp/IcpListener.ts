@@ -59,8 +59,11 @@ export class IcpListenerImpl implements Listener {
                 contract: message.contract_address,
                 tokenId: BigInt(message.token_id),
             };
+            const collectionName = "";
+            const collectionSymbol = "";
+            const metadata = "";
 
-            this.onMessageReceived(parsedMessage);
+            this.onMessageReceived(parsedMessage, collectionName, collectionSymbol, metadata);
             return new Response('success', { status: 200 });
         } catch (e) {
             console.error(e);

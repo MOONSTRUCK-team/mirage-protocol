@@ -5,6 +5,8 @@ export const idlFactory = ({ IDL }) => {
     'src_chain_id' : IDL.Nat64,
     'token_id' : IDL.Nat64,
     'dest_address' : IDL.Text,
+    'collection_name' : IDL.Text,
+    'collection_symbol' : IDL.Text,
     'nonce' : IDL.Nat64,
     'contract_address' : IDL.Text,
     'op_type' : IDL.Nat8,

@@ -25,7 +25,7 @@ export interface Message {
     tokenId: bigint;
 }
 
-export type ExtendedMessage = Message & { metadata?: string };
+export type ExtendedMessage = Message & { collectionName: string, collectionSymbol: string, metadata?: string };
 
 export interface Executor {
     execute(message: ExtendedMessage): void;
@@ -35,7 +35,7 @@ export interface Router {
     routeMessage(message: ExtendedMessage): void;
 }
 
-export type MessageCallback = (message: Message, metadata?: string) => void;
+export type MessageCallback = (message: Message, collectionName: string, collectionSymbol: string, metadata?: string) => void;
 
 export interface Listener {
     setup(onMessageReceived: MessageCallback): void;

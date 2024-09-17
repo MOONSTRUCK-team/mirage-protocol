@@ -11,6 +11,8 @@ export interface Message {
   'src_chain_id' : bigint,
   'token_id' : bigint,
   'dest_address' : string,
+  'collection_name' : string,
+  'collection_symbol' : string,
   'nonce' : bigint,
   'contract_address' : string,
   'op_type' : number,

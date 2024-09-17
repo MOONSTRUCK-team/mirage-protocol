@@ -31,4 +31,13 @@ export class EvmMetadataReaderImpl {
         }
         return metadata;
     }
+
+    async readCollectionInfo(contract: AddressLike): Promise<{ name: string, symbol: string }> {
+        const provider = new JsonRpcProvider(this.rpcUrl, undefined, { staticNetwork: true });
+        const nftContract = ERC721__factory.connect(contract.toString(), provider);
+        const name = await nftContract.name();
+        const symbol = await nftContract.symbol();
+
+        return { name, symbol };
+    }
 }

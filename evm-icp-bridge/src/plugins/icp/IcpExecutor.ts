@@ -40,6 +40,8 @@ export class IcpExecutorImpl implements Executor {
             dest_chain_id: BigInt(message.destChainId),
             dest_address: message.destAddress,
             contract_address: message.contract.toString(),
+            collection_name: message.collectionName,
+            collection_symbol: message.collectionSymbol,
             token_id: BigInt(message.tokenId),
             token_metadata: message.metadata ?? '',
         }
