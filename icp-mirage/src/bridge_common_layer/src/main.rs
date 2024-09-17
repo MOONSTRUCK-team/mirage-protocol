@@ -8,6 +8,7 @@ use ic_cdk::call;
 use ic_cdk_macros::update;
 use icrc7::types::{Account, MintArgs, TransferError};
 
+use manager::types::SourceCollectionArgs;
 use serde::{Deserialize, Serialize};
 
 const MANAGER_CANISTER_PRINCIPAL: &str = "be2us-64aaa-aaaaa-qaabq-cai";
@@ -22,6 +23,8 @@ pub struct Message {
     pub dest_chain_id: u64,
     pub dest_address: String,
     pub contract_address: String,
+    pub collection_name: String,
+    pub collection_symbol: String,
     pub token_id: u64,
     pub token_metadata: String,
 }
@@ -29,6 +32,11 @@ pub struct Message {
 // Function to fetch a message from the external bridge service and mint a token
 #[update]
 pub async fn execute_message(msg: Message) -> Result<Nat, String> {
+    let src_collection_args = SourceCollectionArgs {
+        address: msg.contract_address,
+        name: msg.collection_name,
+        symbol: msg.collection_symbol,
+    };
     // Convert the Message into MintArgs to use with the mint function
     let mint_args = MintArgs {
         to: Account {
@@ -42,6 +50,7 @@ pub async fn execute_message(msg: Message) -> Result<Nat, String> {
     // Get NFT collection
     let get_collection_call_result = call_token_mint(
         Principal::from_text(MANAGER_CANISTER_PRINCIPAL).unwrap(),
+        src_collection_args,
         mint_args,
     )
     .await;
@@ -51,9 +60,13 @@ pub async fn execute_message(msg: Message) -> Result<Nat, String> {
     }
 }
 
-async fn call_token_mint(canister_id: Principal, mint_args: MintArgs) -> Result<Nat, String> {
+async fn call_token_mint(
+    canister_id: Principal,
+    src_collection_args: SourceCollectionArgs,
+    mint_args: MintArgs,
+) -> Result<Nat, String> {
     let call_result: Result<(Result<Nat, TransferError>,), (RejectionCode, String)> =
-        call(canister_id, "token_mint", (mint_args,)).await;
+        call(canister_id, "token_mint", (src_collection_args, mint_args)).await;
     match call_result {
         Ok(value) => match value.0 {
             Ok(token_id) => {

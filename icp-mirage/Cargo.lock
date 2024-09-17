@@ -62,6 +62,7 @@ dependencies = [
  "ic-cdk-timers",
  "ic-stable-structures",
  "icrc7",
+ "manager",
  "num-traits",
  "serde",
  "serde_json",

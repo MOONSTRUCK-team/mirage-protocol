@@ -1,17 +1,12 @@
-use candid::{CandidType, Nat, Principal};
+use candid::{Nat, Principal};
 use ic_cdk::api::call::{call, RejectionCode};
 use ic_cdk_macros::update;
 use icrc7::types::{MintArgs, TransferError};
-use serde::{Deserialize, Serialize};
+use types::SourceCollectionArgs;
+
+mod types;
 
 const TOKEN_FACTORY_CANISTER_PRINCIPAL: &str = "bkyz2-fmaaa-aaaaa-qaaaq-cai";
-
-#[derive(Clone, Debug, Serialize, Deserialize, CandidType)]
-pub struct SourceCollectionArgs {
-    pub address: String,
-    pub name: String,
-    pub symbol: String,
-}
 
 #[update]
 pub async fn token_mint(
