@@ -6,7 +6,7 @@ use types::SourceCollectionArgs;
 
 mod types;
 
-const TOKEN_FACTORY_CANISTER_PRINCIPAL: &str = "bkyz2-fmaaa-aaaaa-qaaaq-cai";
+const TOKEN_FACTORY_CANISTER_PRINCIPAL: &str = "bd3sg-teaaa-aaaaa-qaaba-cai";
 
 #[update]
 pub async fn token_mint(
