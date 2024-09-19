@@ -65,7 +65,7 @@ async fn call_token_mint(
     src_collection_args: SourceCollectionArgs,
     mint_args: MintArgs,
 ) -> Result<Nat, String> {
-    let call_result: Result<(Result<Nat, TransferError>,), (RejectionCode, String)> =
+    let call_result: Result<(Result<Nat, String>,), (RejectionCode, String)> =
         call(canister_id, "token_mint", (src_collection_args, mint_args)).await;
     match call_result {
         Ok(value) => match value.0 {
