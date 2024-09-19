@@ -24,3 +24,5 @@ dist/
 # environment variables
 .env
 
+# Project-specific files
+wasm_files/
