@@ -37,6 +37,31 @@ pub async fn execute_message(msg: Message) -> Result<Nat, String> {
         name: msg.collection_name,
         symbol: msg.collection_symbol,
     };
+
+    // TODO: Move metadata extraction and population logic to a utility function/file
+    // Extract metadata
+    let metadata_to_json_result: Result<serde_json::Value, serde_json::Error> =
+        serde_json::from_str(&msg.token_metadata);
+    let metadata_as_json;
+    match metadata_to_json_result {
+        Ok(value) => {
+            metadata_as_json = value;
+        }
+        Err(err) => {
+            return Err(format!("Failed to parse metadata: {}", err.to_string()));
+        }
+    }
+    // Create and populate the expected metadata structure with the extracted metadata
+    let mut metadata_entries: Vec<MetadataEntry> = vec![];
+    for (key, value) in metadata_as_json.as_object().unwrap() {
+        // TODO: A more complex JSON hierarchy should be taken into consideration and more robust checks need to be performed
+        let metadata_entry = MetadataEntry {
+            key: key.to_string(),
+            value: value.as_str().unwrap().to_string(),
+        };
+        metadata_entries.push(metadata_entry);
+    }
+
     // Convert the Message into MintArgs to use with the mint function
     let mint_args = MintArgs {
         to: Account {
@@ -44,7 +69,7 @@ pub async fn execute_message(msg: Message) -> Result<Nat, String> {
             subaccount: None,                                       // No subaccount
         },
         token_id: Nat::from(msg.token_id), // Convert token_id to Nat
-        metadata: vec![],                  // No metadata provided
+        metadata: metadata_entries,        // No metadata provided
     };
 
     // Get NFT collection
