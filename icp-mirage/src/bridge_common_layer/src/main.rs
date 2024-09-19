@@ -6,7 +6,7 @@ use ic_cdk::api::management_canister::http_request::{
 };
 use ic_cdk::call;
 use ic_cdk_macros::update;
-use icrc7::types::{Account, MintArgs, TransferError};
+use icrc7::types::{Account, MetadataEntry, MintArgs};
 
 use manager::types::SourceCollectionArgs;
 use serde::{Deserialize, Serialize};
