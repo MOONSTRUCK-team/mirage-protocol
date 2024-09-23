@@ -57,6 +57,7 @@ name = "bridge_common_layer"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "hex",
  "ic-cdk",
  "ic-cdk-macros",
  "ic-cdk-timers",
