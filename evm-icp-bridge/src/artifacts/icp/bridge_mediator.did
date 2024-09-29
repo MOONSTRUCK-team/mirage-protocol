@@ -1,15 +1,17 @@
+type Nat = nat;
+
 type Message = record{
-    id: text;
-    nonce: nat64;
-    op_type: nat8;
-    src_chain_id: nat64;
-    dest_chain_id: nat64;
-    dest_address: text;
-    contract_address: text;
-    collection_name: text;
-    collection_symbol: text;
-    token_id: nat64;
-    token_metadata: text;
+  id: text;
+  nonce: nat64;
+  op_type: nat8;
+  src_chain_id: nat64;
+  dest_chain_id: nat64;
+  dest_address: text;
+  contract_address: text;
+  collection_name: text;
+  collection_symbol: text;
+  token_id: nat64;
+  token_metadata: text;
 };
 
 type ExecuteError = variant {
@@ -23,6 +25,6 @@ type ExecuteResult = variant {
 
 
 service : {
-    "execute_message": (Message) -> ();
-    "send_message": () -> (ExecuteResult);
+  "execute_message": (Message) -> (variant { Ok: Nat; Err: text });
+  "send_message": () -> (ExecuteResult);
 }

@@ -14,8 +14,13 @@ export const idlFactory = ({ IDL }) => {
   });
   const ExecuteError = IDL.Variant({ 'MessageNotExecuted' : IDL.Text });
   const ExecuteResult = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : ExecuteError });
+  const Nat = IDL.Nat;
   return IDL.Service({
-    'execute_message' : IDL.Func([Message], [], []),
+    'execute_message' : IDL.Func(
+        [Message],
+        [IDL.Variant({ 'Ok' : Nat, 'Err' : IDL.Text })],
+        [],
+      ),
     'send_message' : IDL.Func([], [ExecuteResult], []),
   });
 };

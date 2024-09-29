@@ -18,8 +18,13 @@ export interface Message {
   'op_type' : number,
   'token_metadata' : string,
 }
+export type Nat = bigint;
 export interface _SERVICE {
-  'execute_message' : ActorMethod<[Message], undefined>,
+  'execute_message' : ActorMethod<
+    [Message],
+    { 'Ok' : Nat } |
+      { 'Err' : string }
+  >,
   'send_message' : ActorMethod<[], ExecuteResult>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
