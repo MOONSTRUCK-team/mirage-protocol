@@ -46,7 +46,14 @@ export class IcpExecutorImpl implements Executor {
             token_metadata: message.metadata ?? '',
         }
         try {
-            await this.actor?.execute_message(packedMessage);
+            await this.actor?.execute_message(packedMessage).then(response => {
+                if ('Ok' in response) {
+                    console.log(response.Ok);
+                } else if ('Err' in response) {
+                    // TODO If the NFT reflection fails to mint on the destination chain, an error should be thrown, and the original NFT should be released on the source chain
+                    console.log(response.Err);
+                }
+            });
             console.log('Message executed on the ICP:', message.id);
         } catch (e) {
             console.error(e);
