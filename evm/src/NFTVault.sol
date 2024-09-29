@@ -8,14 +8,14 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract NFTVault is INFTVault {
     struct VaultRecord {
+        address owner;
         bool isActive;
     }
 
-    mapping(address owner => mapping(address collection => mapping(uint256 tokenId => VaultRecord record))) public
-        records;
+    mapping(address collection => mapping(uint256 tokenId => VaultRecord record)) public records;
 
     function deposit(IERC721 collection, uint256 tokenId, address owner) external {
-        VaultRecord storage record = records[owner][address(collection)][tokenId];
+        VaultRecord storage record = records[address(collection)][tokenId];
 
         // Checks
         if (record.isActive) {
@@ -24,6 +24,7 @@ contract NFTVault is INFTVault {
 
         // Effects
         record.isActive = true;
+        record.owner = owner;
         emit TokenDeposited(address(collection), tokenId, owner);
 
         // Interactions
@@ -31,8 +32,9 @@ contract NFTVault is INFTVault {
         assert(collection.ownerOf(tokenId) == address(this));
     }
 
-    function release(IERC721 collection, uint256 tokenId, address owner) external {
-        VaultRecord storage record = records[owner][address(collection)][tokenId];
+    function release(IERC721 collection, uint256 tokenId) external {
+        VaultRecord storage record = records[address(collection)][tokenId];
+        address owner = record.owner;
 
         // Checks
         if (!record.isActive) {
@@ -40,7 +42,7 @@ contract NFTVault is INFTVault {
         }
 
         // Effects
-        record.isActive = false;
+        delete records[address(collection)][tokenId];
         emit TokenReleased(address(collection), tokenId, owner);
 
         // Interactions

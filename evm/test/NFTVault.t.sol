@@ -54,7 +54,7 @@ contract NFTVaultTest is Test {
         vm.expectRevert(abi.encodeWithSelector(TokenNotDeposited.selector, address(collection), 1));
 
         // Act
-        nftVault.release(collection, 1, address(this));
+        nftVault.release(collection, 1);
     }
 
     function test_release_SuccessfulRelease() external {
@@ -69,7 +69,7 @@ contract NFTVaultTest is Test {
         emit TokenReleased(address(collection), 1, address(this));
 
         // Act
-        nftVault.release(collection, 1, address(this));
+        nftVault.release(collection, 1);
 
         // Assert
         assertEq(collection.ownerOf(1), address(this));

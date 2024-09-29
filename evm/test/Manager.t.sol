@@ -43,7 +43,7 @@ contract ManagerTest is Test {
         vm.expectRevert(abi.encodeWithSelector(CallerNotBridgeMediator.selector));
 
         // Act
-        manager.onTokenBurned(collection, 1, address(this));
+        manager.onTokenBurned(collection, 1);
     }
 
     function test_onTokenBurned_SuccessfulRelease() external {
@@ -55,11 +55,11 @@ contract ManagerTest is Test {
         assertEq(collection.ownerOf(1), address(nftVault));
 
         vm.expectEmit(address(manager));
-        emit OnTokenBurnedCallback(address(collection), 1, address(this));
+        emit OnTokenBurnedCallback(address(collection), 1);
 
         // Act
         vm.prank(bridgeMediator);
-        manager.onTokenBurned(collection, 1, address(this));
+        manager.onTokenBurned(collection, 1);
 
         // Assert
         assertEq(collection.ownerOf(1), address(this));

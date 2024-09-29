@@ -27,10 +27,10 @@ contract Manager is IManager {
         _sendMintTokenMessage(collection, tokenId, msg.sender);
     }
 
-    function onTokenBurned(IERC721 collection, uint256 tokenId, address owner) external onlyBridgeMediator {
-        _nftVault.release(collection, tokenId, owner);
+    function onTokenBurned(IERC721 collection, uint256 tokenId) external {
+        _nftVault.release(collection, tokenId);
 
-        emit OnTokenBurnedCallback(address(collection), tokenId, owner);
+        emit OnTokenBurnedCallback(address(collection), tokenId);
     }
 
     function _sendMintTokenMessage(IERC721 collection, uint256 tokenId, address owner) private {
