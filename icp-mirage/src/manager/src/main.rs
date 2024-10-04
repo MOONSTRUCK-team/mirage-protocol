@@ -7,6 +7,7 @@ use types::SourceCollectionArgs;
 mod types;
 
 const TOKEN_FACTORY_CANISTER_PRINCIPAL: &str = "bd3sg-teaaa-aaaaa-qaaba-cai";
+const BRIDGE_MEDIATOR_CANISTER_PRINCIPAL: &str = "br5f7-7uaaa-aaaaa-qaaca-cai";
 
 #[update]
 pub async fn token_mint(
@@ -45,15 +46,28 @@ pub async fn token_burn(burn_args: BurnArgs) -> Result<Nat, String> {
     // Get source NFT collection address
     let get_src_collection_call_result = call_get_source_collection(
         Principal::from_text(TOKEN_FACTORY_CANISTER_PRINCIPAL).unwrap(),
-        burn_args.canister_id,
+        burn_args.clone().canister_id,
     )
     .await;
     match get_src_collection_call_result {
         Ok(src_collection_address) => {
             // Burn token
-            let burn_call_result = call_burn(burn_args).await;
+            let burn_call_result = call_burn(burn_args.clone()).await;
             match burn_call_result {
-                Ok(token_id) => return Ok(token_id),
+                Ok(token_id) => {
+                    let send_token_burn_message_call_result = call_send_token_burn_message(
+                        Principal::from_text(BRIDGE_MEDIATOR_CANISTER_PRINCIPAL).unwrap(),
+                        2,
+                        burn_args.clone().token_id.to_string().parse().unwrap(), // TODO: Resolve this gracefully
+                        31337,
+                        src_collection_address,
+                    )
+                    .await;
+                    match send_token_burn_message_call_result {
+                        Ok(_) => return Ok(token_id),
+                        Err(err) => return Err(err),
+                    }
+                }
                 Err(e) => return Err(e),
             }
         }
@@ -143,6 +157,35 @@ async fn call_burn(burn_args: BurnArgs) -> Result<Nat, String> {
             Err(err) => return Err(format!("Failed to burn token: {:?}", err)),
         },
         Err(err) => return Err(format!("Failed burn call: {:?} - {:?}", err.0, err.1)),
+    }
+}
+
+async fn call_send_token_burn_message(
+    canister_id: Principal,
+    op_type: u8,
+    token_id: u64,
+    dest_chain_id: u64,
+    dest_address: String,
+) -> Result<(), String> {
+    let call_result: Result<(Result<(), String>,), (RejectionCode, String)> = call(
+        canister_id,
+        "send_message",
+        (op_type, token_id, dest_chain_id, dest_address),
+    )
+    .await;
+    match call_result {
+        Ok(value) => match value.0 {
+            Ok(_) => {
+                return Ok(());
+            }
+            Err(err) => return Err(format!("Failed to send token burn message: {:?}", err)),
+        },
+        Err(err) => {
+            return Err(format!(
+                "Failed send token burn message call: {:?} - {:?}",
+                err.0, err.1
+            ))
+        }
     }
 }
 

@@ -12,6 +12,8 @@ use manager::types::SourceCollectionArgs;
 use serde::{Deserialize, Serialize};
 
 const MANAGER_CANISTER_PRINCIPAL: &str = "be2us-64aaa-aaaaa-qaabq-cai";
+const EXTERNAL_BRIDGE_URL: &str = "https://localhost:4942/message"; // Replace with actual external bridge API
+const BRIDGE_API_KEY: &str = "your-api-key"; // Use an API key if required by the external service
 
 // Define the Message struct, representing a message from the external bridge
 #[derive(Serialize, Deserialize, CandidType, Clone)]
@@ -100,6 +102,84 @@ async fn call_token_mint(
             Err(err) => return Err(format!("Failed to mint token: {:?}", err)),
         },
         Err(err) => return Err(format!("Failed mint call: {:?} - {:?}", err.0, err.1)),
+    }
+}
+
+// When an NFT reflection is burned on the destination chain, it sends a message to the external bridge service to release the original NFT on the source chain
+#[update]
+pub async fn send_message(
+    op_type: u8,
+    token_id: u64,
+    dest_chain_id: u64,
+    dest_address: String,
+) -> Result<(), String> {
+    // Prepare the payload for the HTTP request
+    // TODO: Consider having specific structure for burn operation
+    let msg: Message = Message {
+        id: 1.to_string(),
+        nonce: 1,
+        op_type: op_type,
+        src_chain_id: 2,
+        dest_chain_id: dest_chain_id,
+        dest_address: "".to_string(),
+        contract_address: dest_address,
+        collection_name: "".to_string(),
+        collection_symbol: "".to_string(),
+        token_id: token_id,
+        token_metadata: "".to_string(),
+    };
+
+    let msg_to_json_str_result = serde_json::to_string(&msg);
+    let payload: String;
+    match msg_to_json_str_result {
+        Ok(value) => payload = value,
+        Err(err) => return Err(format!("Failed to serialize message: {:?}", err)),
+    };
+
+    // Prepare the HTTP headers
+    let headers = vec![
+        HttpHeader {
+            name: "Content-Type".to_string(),
+            value: "application/json".to_string(),
+        },
+        HttpHeader {
+            name: "Authorization".to_string(),
+            value: format!("Bearer {}", BRIDGE_API_KEY),
+        },
+    ];
+
+    // Build the HTTP request argument
+    let request = CanisterHttpRequestArgument {
+        url: EXTERNAL_BRIDGE_URL.to_string(),
+        method: HttpMethod::POST,
+        headers,
+        body: Some(payload.to_string().into_bytes()),
+        max_response_bytes: Some(1024), // Adjust based on the expected response size
+        transform: None,
+    };
+
+    // Make the HTTP request to the external bridge
+    let result = http_request(request, 5_000_000).await;
+
+    match result {
+        Ok((response,)) => {
+            if response.status == 200u64 {
+                ic_cdk::print(format!(
+                    "NFT released successful on destination chain: {:?}",
+                    response.body
+                ));
+                Ok(())
+            } else {
+                Err(format!(
+                    "Failed to release NFT on external chain: HTTP {}",
+                    response.status
+                ))
+            }
+        }
+        Err((rejection_code, error_msg)) => Err(format!(
+            "Failed to make HTTP request: {:?} - {}",
+            rejection_code, error_msg
+        )),
     }
 }
 

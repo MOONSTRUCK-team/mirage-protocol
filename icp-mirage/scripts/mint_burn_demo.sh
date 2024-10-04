@@ -102,5 +102,36 @@ dfx canister call $DST_COLLECTION_ADDRESS get_token_metadata \
    $TOKEN_ID : nat
 )"
 
+echo "(*) Burn token $TOKEN_ID:"
+dfx canister call manager token_burn \
+'(
+  record {
+    canister_id = '"principal \"${DST_COLLECTION_ADDRESS}\""' : principal;
+    token_id = '"${TOKEN_ID}"' : nat;
+  },
+)'
+
+echo '(*) Total NFTs in existence after token burn:'
+dfx canister call $DST_COLLECTION_ADDRESS get_total_supply
+
+echo "(*) Token balance for $OWNER_PRINCIPAL after token burn:"
+dfx canister call $DST_COLLECTION_ADDRESS get_balance \
+"(
+   $ACCOUNT_RECORD
+)"
+
+echo "(*) Tokens of $OWNER_PRINCIPAL after token burn:"
+dfx canister call $DST_COLLECTION_ADDRESS get_tokens_of \
+"(
+   $ACCOUNT_RECORD
+)"
+
+echo "(*) Is $OWNER_PRINCIPAL owner of NFT $TOKEN_ID after token burn:"
+dfx canister call $DST_COLLECTION_ADDRESS is_owner \
+"(
+   $ACCOUNT_RECORD,
+   $TOKEN_ID : nat
+)"
+
 ## Teardown
 dfx identity remove owner;
