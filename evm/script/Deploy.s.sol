@@ -12,7 +12,7 @@ import { BaseScript } from "./Base.s.sol";
 contract Deploy is BaseScript {
     function run() public broadcast returns (Manager manager) {
         NFTVault nftVault = new NFTVault();
-        NFTExample _ = new NFTExample();
+        NFTExample collection = new NFTExample();
         BridgeMediator bridgeMediator = new BridgeMediator(address(0));
         manager = new Manager(address(nftVault), address(bridgeMediator));
         bridgeMediator.setManager(address(manager));
