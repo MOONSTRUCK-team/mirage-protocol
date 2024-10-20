@@ -1,8 +1,11 @@
 [package]
-name = "bridge_common_layer"
+name = "vault"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "vault"
+path = "src/main.rs"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -11,18 +14,13 @@ path = "src/lib.rs"
 [dependencies]
 candid = "0.10"
 ic-cdk = "0.16"
-<<<<<<< HEAD
-ic-cdk-macros = "0.16.0"
-=======
 ic-cdk-timers = "0.9.0"
 ic-cdk-macros = "0.15.0"
 ic-stable-structures = "0.6.5"
->>>>>>> 9c41e9c (Vault try)
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+num-traits = "0.2"
 icrc7 = { path = "../icrc7" }
-manager = { path = "../manager" }
-
 
 
 [dev-dependencies]

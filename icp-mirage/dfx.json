@@ -27,6 +27,13 @@
       "package":"manager",
       "build": "cargo build --target wasm32-unknown-unknown --release",
       "wasm": "target/wasm32-unknown-unknown/release/manager.wasm"
+    },
+    "vault":{
+      "candid":"src/vault/vault.did",
+      "type":"rust",
+      "package":"vault",
+      "build":"cargo build --target wasm32-unknown-unknown --release",
+      "wasm":"target/wasm32-unknown-unknown/release/manager.wasm"
     }
   },
   "defaults": {

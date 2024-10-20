@@ -1,0 +1,6 @@
+service : {
+  "deposit_nft": (vec text) -> (opt text);
+  "withdraw_nft": (vec text) -> (opt text);
+  "get_nfts_for_account": () -> (vec text) query;
+  "report_to_manager": (nat) -> (opt text);
+}

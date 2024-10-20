@@ -18,7 +18,6 @@ pub struct MintArgs {
     pub metadata: Vec<MetadataEntry>,
 }
 
-// Metadata structure with PartialEq derived
 #[derive(Clone, Debug, Serialize, Deserialize, CandidType, PartialEq)]
 pub struct MetadataEntry {
     pub key: String,
