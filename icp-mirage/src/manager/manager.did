@@ -27,6 +27,12 @@ type MintArgs = record {
   metadata: vec MetadataEntry;
 };
 
+type BurnArgs = record {
+  canister_id: Principal;
+  token_id: TokenId;
+};
+
 service : {
   token_mint: (src_collection_args: SourceCollectionArgs, mint_args: MintArgs) -> (variant { Ok: Nat; Err: text });
+  token_burn: (burn_args: BurnArgs) -> (variant { Ok: Nat; Err: text });
 }

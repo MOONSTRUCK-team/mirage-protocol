@@ -24,6 +24,12 @@ pub struct MetadataEntry {
     pub value: String,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, CandidType, PartialEq)]
+pub struct BurnArgs {
+    pub canister_id: Principal,
+    pub token_id: TokenId,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, CandidType)]
 pub struct TransferArgs {
     pub from: Account,

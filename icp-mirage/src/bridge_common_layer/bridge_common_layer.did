@@ -17,5 +17,5 @@ type Message = record {
 
 service : {
   process_bridge_message: () ->  (variant { Ok: Nat; Err: text });
-  execute_message: (Message) -> (variant { Ok: Nat; Err: text });
+  send_message: (nat8,nat64,nat64,text) -> (variant { Ok: null; Err: text });
 }

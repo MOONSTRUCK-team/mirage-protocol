@@ -9,23 +9,33 @@ const MANAGER_CANISTER_PRINCIPAL: &str = "be2us-64aaa-aaaaa-qaabq-cai";
 
 pub struct NFTFactory {
     collections: HashMap<String, Principal>, // Source chain collection address to ICP collection principal
+    collections_src: HashMap<Principal, String>, // ICP collection principal to source chain collection address
 }
 
 impl NFTFactory {
     pub fn new() -> Self {
         Self {
             collections: HashMap::new(),
+            collections_src: HashMap::new(),
         }
     }
 
     // Store new NFT canister instance
     pub fn store_nft_collection(&mut self, src_collection_addr: String, canister_id: Principal) {
-        self.collections.insert(src_collection_addr, canister_id);
+        self.collections
+            .insert(src_collection_addr.clone(), canister_id);
+        self.collections_src
+            .insert(canister_id, src_collection_addr.clone());
     }
 
     // Get NFT canister instance
     pub fn get_nft_collection(&mut self, src_chain_contract_addr: String) -> Option<Principal> {
         self.collections.get(&src_chain_contract_addr).cloned()
+    }
+
+    // Get source NFT collection address
+    pub fn get_src_nft_collection(&mut self, canister_id: Principal) -> Option<String> {
+        self.collections_src.get(&canister_id).cloned()
     }
 
     // Get all collections
@@ -84,6 +94,12 @@ pub async fn get_nft_collection(src_chain_contract_addr: String) -> Option<Princ
             .borrow_mut()
             .get_nft_collection(src_chain_contract_addr)
     })
+}
+
+// Query function to retrieve source collection ID matching ICP collection
+#[ic_cdk_macros::query]
+pub async fn get_src_nft_collection(canister_id: Principal) -> Option<String> {
+    FACTORY.with(|factory| factory.borrow_mut().get_src_nft_collection(canister_id))
 }
 
 // Query function to get the collections
