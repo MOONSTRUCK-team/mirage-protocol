@@ -1,0 +1,9 @@
+[workspace]
+members = [
+    "src/bridge_common_layer",
+    "src/icrc7",
+    "src/manager",
+    "src/token_factory",  
+    "src/vault"  
+]
+resolver = "2"

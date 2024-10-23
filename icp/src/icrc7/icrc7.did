@@ -1,0 +1,54 @@
+type Nat = nat;
+type Principal = principal;
+
+type Subaccount = vec nat8;
+
+type Account = record {
+  owner: Principal;
+  subaccount: opt Subaccount;
+};
+
+type TokenId = Nat;
+
+type MetadataEntry = record {
+  key: text;
+  value: text;
+};
+
+type MintArgs = record {
+  to: Account;
+  token_id: TokenId;
+  metadata: vec MetadataEntry;
+};
+
+type TransferArgs = record {
+  from: Account;
+  to: Account;
+  token_ids: vec TokenId;
+};
+
+type TransferError = variant {
+  Unauthorized: record { token_ids: vec TokenId };
+  TokenAlreadyExists: record { token_id: TokenId };
+  TokenNotFound: record { token_id: TokenId };
+  InsufficientBalance: record { token_id: TokenId };
+  InvalidMetadata: record { token_id: TokenId };
+};
+
+type TransferResult = variant {
+  Ok: Nat;
+  Err: TransferError;
+};
+
+service : (text, text) -> {
+  mint_token: (MintArgs) -> (variant { Ok: Nat; Err: TransferError });
+  transfer_tokens: (vec TransferArgs) -> (vec opt TransferResult);
+  burn_token: (TokenId) -> (variant { Ok: Nat; Err: TransferError });
+  icrc7_name : () -> (text) query;
+  icrc7_symbol : () -> (text) query;
+  get_token_metadata: (TokenId) -> (opt vec MetadataEntry) query;
+  get_balance: (Account) -> (vec TokenId) query;
+  get_total_supply: () -> (Nat) query;
+  is_owner: (Account, TokenId) -> (bool) query;
+  get_tokens_of: (Account) -> (vec TokenId) query;
+}

@@ -1,0 +1,21 @@
+type Nat = nat;
+type Principal = principal;
+
+type Message = record {
+  id: text;
+  nonce: nat64;
+  op_type: nat8;
+  src_chain_id: nat64;
+  dest_chain_id: nat64;
+  dest_address: text;
+  contract_address: text;
+  collection_name: text;
+  collection_symbol: text;
+  token_id: nat64;
+  token_metadata: text;
+};
+
+service : {
+  process_bridge_message: () ->  (variant { Ok: Nat; Err: text });
+  send_message: (nat8,nat64,nat64,text) -> (variant { Ok: null; Err: text });
+}

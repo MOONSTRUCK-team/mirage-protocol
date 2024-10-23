@@ -1,0 +1,9 @@
+type Nat = nat;
+type Principal = principal;
+
+service : {
+  get_or_create_nft_collection: (src_chain_addr: text, name: text, symbol: text) -> (variant { Ok: Principal; Err: text });
+  get_nft_collection: (text) -> (opt Principal);
+  get_src_nft_collection: (Principal) -> (opt text);
+  get_all_collections: () -> (vec record { text; Principal; }) query;
+}

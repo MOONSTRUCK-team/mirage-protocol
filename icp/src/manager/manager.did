@@ -1,0 +1,38 @@
+type Nat = nat;
+type Principal = principal;
+
+type SourceCollectionArgs = record {
+  address: text;
+  name: text;
+  symbol: text;
+};
+
+type Subaccount = vec nat8;
+
+type Account = record {
+  owner: Principal;
+  subaccount: opt Subaccount;
+};
+
+type TokenId = Nat;
+
+type MetadataEntry = record {
+  key: text;
+  value: text;
+};
+
+type MintArgs = record {
+  to: Account;
+  token_id: TokenId;
+  metadata: vec MetadataEntry;
+};
+
+type BurnArgs = record {
+  canister_id: Principal;
+  token_id: TokenId;
+};
+
+service : {
+  token_mint: (src_collection_args: SourceCollectionArgs, mint_args: MintArgs) -> (variant { Ok: Nat; Err: text });
+  token_burn: (burn_args: BurnArgs) -> (variant { Ok: Nat; Err: text });
+}

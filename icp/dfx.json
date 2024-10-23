@@ -1,0 +1,47 @@
+{
+  "canisters": {
+    "icrc7": {
+      "candid": "src/icrc7/icrc7.did",
+      "type": "rust",
+      "package":"icrc7",
+      "build": "cargo build --target wasm32-unknown-unknown --release",
+      "wasm": "target/wasm32-unknown-unknown/release/icrc7.wasm"
+    },
+    "token_factory": {
+      "candid": "src/token_factory/token_factory.did",
+      "type": "rust",
+      "package":"token_factory",
+      "build": "cargo build --target wasm32-unknown-unknown --release",
+      "wasm": "target/wasm32-unknown-unknown/release/token_factory.wasm"
+    },
+    "bridge_common_layer": {
+      "candid": "src/bridge_common_layer/bridge_common_layer.did",
+      "type": "rust",
+      "package":"bridge_common_layer",
+      "build": "cargo build --target wasm32-unknown-unknown --release",
+      "wasm": "target/wasm32-unknown-unknown/release/bridge_common_layer.wasm"
+    },
+    "manager": {
+      "candid": "src/manager/manager.did",
+      "type": "rust",
+      "package":"manager",
+      "build": "cargo build --target wasm32-unknown-unknown --release",
+      "wasm": "target/wasm32-unknown-unknown/release/manager.wasm"
+    },
+    "vault":{
+      "candid":"src/vault/vault.did",
+      "type":"rust",
+      "package":"vault",
+      "build":"cargo build --target wasm32-unknown-unknown --release",
+      "wasm":"target/wasm32-unknown-unknown/release/vault.wasm"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
