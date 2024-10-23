@@ -1,0 +1,54 @@
+# TODO
+# Docker compose file for setting up the test environment
+# On one side local EVM node is running and on the other side ICP node is running
+# Run and configure the bridge service
+# Execute the methods on the EVM node and check the results on the ICP node
+
+services:
+  evm-node:
+    #platform: linux/amd64 # for arm64 host
+    build: ./local/evm
+    container_name: evm-contract
+    networks:
+      - bridge-network
+    ports:
+      - "8545:8545" # Expose EVM node port
+
+  icp-node:
+    # platform: linux/amd64 # for arm64 host
+     build: ./local/icp
+     container_name: icp-canister
+     networks:
+       - bridge-network
+     ports:
+       - "4943:4943" # Expose ICP node port
+     healthcheck:
+       test: ["CMD", "curl", "-f", "http://127.0.0.1:4943/?canisterId=bd3sg-teaaa-aaaaa-qaaba-cai&id=bkyz2-fmaaa-aaaaa-qaaaq-cai"]
+       interval: 30s
+       retries: 5
+       start_period: 30s
+       timeout: 10s
+
+  bridge-service:
+    build: .
+    container_name: bridge-service
+    networks:
+      - bridge-network
+    env_file:
+    # TODO Not enough, need to retrieve the canister id and executor secret key from the icp-node
+      - .env.example
+    depends_on:
+      evm-node:
+        condition: service_started
+      icp-node:
+        condition: service_healthy
+        restart: true
+    ports:
+      - "4942:4942" # Expose ICP listener port
+    volumes:
+      - ./tls/example-key.pem:/usr/src/app/tls/example-key.pem
+      - ./tls/example.pem:/usr/src/app/tls/example.pem
+
+networks:
+  bridge-network:
+    driver: bridge

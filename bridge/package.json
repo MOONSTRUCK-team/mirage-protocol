@@ -1,0 +1,21 @@
+{
+  "name": "evm-icp-bridge",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "typechain": "typechain --target ethers-v6 ./src/artifacts/evm/*.json"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typechain": "^8.3.2"
+  },
+  "peerDependencies": {
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "@dfinity/agent": "^2.0.0",
+    "@dfinity/identity-secp256k1": "^2.0.0",
+    "@typechain/ethers-v6": "^0.5.1",
+    "ethers": "^6.13.2"
+  }
+}

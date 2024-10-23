@@ -1,0 +1,8 @@
+node_modules
+.git
+.gitignore
+README.md
+.env
+
+# ignore eveyrthing except bridge files
+tls
